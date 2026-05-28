@@ -1,25 +1,44 @@
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import inspect
+from sqlalchemy import create_engine, inspect
+from sqlalchemy.orm import sessionmaker, Session
+from contextlib import contextmanager
 from ..config import DATABASE_URL
 from src.entities.models import Base
 
+
 class Database:
+    _instance: "Database | None" = None
+
+    def __new__(cls) -> "Database":
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
+
     def __init__(self):
-        self.engine = create_engine(DATABASE_URL, echo=True)  
+        if self._initialized:
+            return
+        self.engine = create_engine(DATABASE_URL, echo=True)
         self.Session = sessionmaker(bind=self.engine)
-    
+        self._initialized = True
+
+    @contextmanager
     def get_session(self):
-        return self.Session()
+        session: Session = self.Session()
+        try:
+            yield session
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
 
     def create_tables(self):
         try:
             with self.engine.begin() as conn:
                 print("Creating tables...")
                 Base.metadata.create_all(bind=conn)
-                print("Tables sucessfully created")
-                conn.commit()  
+                print("Tables successfully created")
         except Exception as e:
             print(f"Error on tables creation: {e}")
         self.test_connection()
@@ -31,8 +50,12 @@ class Database:
                 inspector = inspect(self.engine)
                 print(f"Existing tables: {inspector.get_table_names()}")
                 schemas = inspector.get_schema_names()
-                print(f"Schemas avaliable: {schemas}")
+                print(f"Schemas available: {schemas}")
                 tabelas = inspector.get_table_names(schema="public")
                 print(f"Tables on schema 'public': {tabelas}")
         except Exception as e:
             print(f"Error on db connection: {e}")
+
+
+def get_db_instance() -> Database:
+    return Database()
