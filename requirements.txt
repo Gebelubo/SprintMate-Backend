@@ -1,5 +1,9 @@
 fastapi 
 uvicorn[standard] 
 sqlalchemy 
-psycopg2-binary
-fastapi[standard]
+psycopg2-binary 
+fastapi[standard] 
+alembic 
+passlib 
+python-jose
+
