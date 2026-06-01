@@ -14,7 +14,9 @@ dependencies = [
     "psycopg2-binary (>=2.9.12,<3.0.0)",
     "alembic (>=1.18.4,<2.0.0)",
     "passlib (>=1.7.4,<2.0.0)",
-    "python-jose (>=3.5.0,<4.0.0)"
+    "python-jose (>=3.5.0,<4.0.0)",
+    "decouple (>=0.0.7,<0.0.8)",
+    "fastapi-mail (>=1.6.4,<2.0.0)"
 ]
 
 
