@@ -1,13 +1,15 @@
-from src.db.db import Database
 from fastapi import FastAPI
-
-db = Database()
+from src.db.db import get_db_instance
+from src.routers import user, auth
 
 app = FastAPI()
 
+app.include_router(user.router)
+app.include_router(auth.router)
+
 @app.on_event("startup")
 async def startup_event():
-    print("ok")
+    db = get_db_instance()
     db.test_connection()
     db.create_tables()
 
