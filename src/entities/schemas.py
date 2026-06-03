@@ -77,7 +77,7 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True
 
-class ForgotPasswordRequest(BaseModel):
+class EmailRequest(BaseModel):
     email: EmailStr
 
 

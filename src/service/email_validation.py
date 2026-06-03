@@ -27,3 +27,27 @@ async def send_reset_email(email: str, token: str):
 
     fm = FastMail(conf)
     await fm.send_message(message)
+
+
+async def send_validation_email(email: str):
+
+    reset_link = (
+        f"botar link aqui"
+    )
+
+    message = MessageSchema(
+        subject="Recuperação de Senha",
+        recipients=[email],
+        body=f"""
+        Olá,
+
+        Clique no link abaixo para validar seu cadastro:
+
+        {reset_link}
+
+        """,
+        subtype=MessageType.plain
+    )
+
+    fm = FastMail(conf)
+    await fm.send_message(message)

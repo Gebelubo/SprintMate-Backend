@@ -112,6 +112,14 @@ class AuthService:
         return {
             "message": "Link de recuperação enviado"
         }
+
+    async def validation_email(self, email: str):
+
+        await send_reset_email(email, token)
+
+        return {
+            "message": "Link de recuperação enviado"
+        }
     
     def reset_password(self, token: str, new_password: str):
 

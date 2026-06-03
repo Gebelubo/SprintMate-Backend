@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from src.entities.schemas import UserCreate, UserResponse, ResetPasswordRequest, ForgotPasswordRequest
+from src.entities.schemas import UserCreate, UserResponse, ResetPasswordRequest, EmailRequest
 from src.service.auth_service import AuthService
 from src.db.deps import get_db
 
@@ -66,7 +66,7 @@ def logout(response: Response):
 
 @router.post("/forgot-password")
 async def forgot_password(
-    request: ForgotPasswordRequest,
+    request: EmailRequest,
     service: AuthService = Depends(get_user_service)
 ):
     return await service.forgot_password(request.email)
@@ -80,3 +80,10 @@ def reset_password(
         token=request.token,
         new_password=request.new_password
     )
+
+@router.post("/validation-email")
+async def validation_email(
+    request: EmailRequest,
+    service: AuthService = Depends(get_user_service)
+):
+    return await service.validation_email(request.email)
