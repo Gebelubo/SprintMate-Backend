@@ -63,3 +63,8 @@ class UserRepository:
         self.db.delete(user)
         self.db.commit()
         return True
+    
+    def save(self, user: User) -> User:
+        self.db.commit()
+        self.db.refresh(user)
+        return user
