@@ -65,11 +65,11 @@ def logout(response: Response):
     }
 
 @router.post("/forgot-password")
-def forgot_password(
+async def forgot_password(
     request: ForgotPasswordRequest,
     service: AuthService = Depends(get_user_service)
 ):
-    return service.forgot_password(request.email)
+    return await service.forgot_password(request.email)
 
 @router.post("/reset-password")
 def reset_password(

@@ -4,7 +4,11 @@ from jose import jwt, JWTError
 from passlib.context import CryptContext
 from decouple import config
 from src.repositories.user_repository import UserRepository
+from src.service.reset_password import send_reset_email
+from src.service.user_service import UserService
 from sqlalchemy.orm import Session
+from src.entities.schemas import UserCreate
+from src.entities.models import User
 
 from src.service.jwt_tokens import (
     create_access_token, 
@@ -19,11 +23,16 @@ ALGORITHM = config("ALGORITHM")
 class AuthService:
 
     def __init__(self, db: Session):
-        self.repository = UserRepository(db)
+        self.user_repository = UserRepository(db)
+        self.user_service = UserService(db)
+
+    def create_user(self, data: UserCreate) -> User | None:
+        hashed_password = self.user_service._hash_password(data.password)
+        return self.user_repository.create(data, hashed_password)
 
     def user_login(self, email: str, password: str):
 
-        user_on_db = self.repository.get_by_email(email)
+        user_on_db = self.user_repository.get_by_email(email)
 
         if user_on_db is None:
             raise HTTPException(
@@ -89,71 +98,42 @@ class AuthService:
                 detail="Invalid refresh token"
             )
         
-    def forgot_password(self, email: str):
+    async def forgot_password(self, email: str):
 
-        user = self.repository.get_by_email(email)
+        user = self.user_repository.get_by_email(email)
 
-        if user is None:
-            return {
-                "message": "If the email exists, a recovery link was sent"
-            }
+        if not user:
+            return {"message": "Email não cadastrado"}
 
-        reset_token = create_reset_token(email)
+        token = create_reset_token(email)
 
-        reset_link = (
-            f"http://localhost:3000/reset-password?"
-            f"token={reset_token}"
-        )
-
-        print(reset_link)
+        await send_reset_email(email, token)
 
         return {
-            "message": "Recovery email sent"
+            "message": "Link de recuperação enviado"
         }
     
-    def reset_password(
-        self,
-        token: str,
-        new_password: str
-    ):
+    def reset_password(self, token: str, new_password: str):
 
         try:
-
             payload = jwt.decode(
                 token,
                 SECRET_KEY,
                 algorithms=[ALGORITHM]
             )
 
-            if payload.get("type") != "reset":
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid token type"
-                )
-
-            email = payload.get("sub")
-
-            user = self.repository.get_by_email(email)
-
-            if user is None:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="User not found"
-                )
-
-            hashed_password = pwd_context.hash(new_password)
-
-            user.password_hash = hashed_password
-
-            self.repository.update(user)
-
-            return {
-                "message": "Password updated successfully"
-            }
+            email = payload["sub"]
 
         except JWTError:
-
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or expired token"
+                status_code=400,
+                detail="Token inválido ou expirado"
             )
+
+        user = self.user_repository.get_by_email(email)
+
+        user.password = self.user_service._hash_password(new_password)
+
+        self.user_repository.save(user)
+
+        return {"message": "Senha alterada com sucesso"}
