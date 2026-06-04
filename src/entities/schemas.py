@@ -4,9 +4,7 @@ from datetime import datetime
 import re
 
 
-# =========================================================
-# USER SCHEMAS
-# =========================================================
+# ------------- USER ----------------
 
 class UserCreate(BaseModel):
     name: str
@@ -84,3 +82,124 @@ class EmailRequest(BaseModel):
 class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str
+
+# ------------ TAKSKS -----------------
+
+from datetime import datetime
+from pydantic import BaseModel
+from typing import Optional
+
+from src.entities.models import TaskTypeEnum, PriorityEnum
+
+
+class TaskBase(BaseModel):
+    title: str
+    description: Optional[str] = None
+
+    type: TaskTypeEnum
+    priority: PriorityEnum
+
+    column_id: Optional[int] = None
+    project_id: int
+    sprint_id: Optional[int] = None
+
+    parent_id: Optional[int] = None
+    epic: Optional[int] = None
+
+    estimate: Optional[datetime] = None
+    points: Optional[int] = None
+
+
+class TaskCreate(TaskBase):
+    pass
+
+
+class TaskUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+
+    type: Optional[TaskTypeEnum] = None
+    priority: Optional[PriorityEnum] = None
+
+    column_id: Optional[int] = None
+    project_id: Optional[int] = None
+    sprint_id: Optional[int] = None
+
+    parent_id: Optional[int] = None
+    epic: Optional[int] = None
+
+    estimate: Optional[datetime] = None
+    points: Optional[int] = None
+
+
+class TaskResponse(TaskBase):
+    id: int
+    created_by: int
+
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {
+        "from_attributes": True
+    }
+
+from pydantic import BaseModel
+
+
+class NotificationConfigResponse(BaseModel):
+    id: int
+    user_id: int
+
+    mention: bool
+    late: bool
+    blocked: bool
+
+    model_config = {
+        "from_attributes": True
+    }
+
+
+class NotificationConfigUpdate(BaseModel):
+    mention: bool | None = None
+    late: bool | None = None
+    blocked: bool | None = None
+
+# --------------- PROJECT -------------------
+
+from src.entities.enums import RoleEnum
+
+class ProjectCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+class ProjectUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+class ProjectResponse(BaseModel):
+    id: int
+    name: str
+    description: Optional[str]
+    code: int
+    created_by: int
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+# ---------- PROJECT USER ----------------
+
+class ProjectUserAdd(BaseModel):
+    user_id: int
+    role: RoleEnum
+
+class ProjectUserUpdateRole(BaseModel):
+    role: RoleEnum
+
+class ProjectUserResponse(BaseModel):
+    id: int
+    user_id: int
+    project_id: int
+    role: RoleEnum
+
+    model_config = {"from_attributes": True}

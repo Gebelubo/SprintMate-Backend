@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.db.db import get_db_instance
-from src.routers import user, auth
+from src.routers import user, auth, task, me, project
 
 app = FastAPI()
 
@@ -15,6 +15,9 @@ app.add_middleware(
 
 app.include_router(user.router)
 app.include_router(auth.router)
+app.include_router(task.router)
+app.include_router(me.router)
+app.include_router(project.router)
 
 @app.on_event("startup")
 async def startup_event():

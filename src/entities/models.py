@@ -112,7 +112,7 @@ class Project(Base, TimestampMixin):
         nullable=False
     )
 
-    code = Column(Integer, nullable=False)
+    code = Column(Integer, nullable=False, unique=True)
 
     # RELATIONSHIPS
     creator = relationship(
