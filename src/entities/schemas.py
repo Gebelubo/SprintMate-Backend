@@ -2,6 +2,7 @@ from pydantic import BaseModel, field_validator, EmailStr
 from typing import Optional
 from datetime import datetime
 import re
+from src.entities.models import SprintStatusEnum
 
 
 # =========================================================
@@ -84,3 +85,22 @@ class EmailRequest(BaseModel):
 class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str
+
+class SprintCreate(BaseModel):
+    name: str
+    project_id: int
+    start_date: datetime
+    end_date: datetime
+    status: SprintStatusEnum
+    goal: str | None = None
+    points: int | None = None
+
+
+class SprintUpdate(BaseModel):
+    name: str | None = None
+    project_id: int | None = None
+    start_date: datetime | None = None
+    end_date: datetime | None = None
+    status: SprintStatusEnum | None = None
+    goal: str | None = None
+    points: int | None = None
