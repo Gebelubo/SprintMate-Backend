@@ -4,9 +4,7 @@ from datetime import datetime
 import re
 
 
-# =========================================================
-# USER SCHEMAS
-# =========================================================
+# ------------- USER ----------------
 
 class UserCreate(BaseModel):
     name: str
@@ -165,3 +163,43 @@ class NotificationConfigUpdate(BaseModel):
     mention: bool | None = None
     late: bool | None = None
     blocked: bool | None = None
+
+# --------------- PROJECT -------------------
+
+from src.entities.enums import RoleEnum
+
+class ProjectCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+class ProjectUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+class ProjectResponse(BaseModel):
+    id: int
+    name: str
+    description: Optional[str]
+    code: int
+    created_by: int
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+# ---------- PROJECT USER ----------------
+
+class ProjectUserAdd(BaseModel):
+    user_id: int
+    role: RoleEnum
+
+class ProjectUserUpdateRole(BaseModel):
+    role: RoleEnum
+
+class ProjectUserResponse(BaseModel):
+    id: int
+    user_id: int
+    project_id: int
+    role: RoleEnum
+
+    model_config = {"from_attributes": True}
