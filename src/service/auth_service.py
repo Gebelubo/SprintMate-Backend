@@ -103,7 +103,10 @@ class AuthService:
         user = self.user_repository.get_by_email(email)
 
         if not user:
-            return {"message": "Email não cadastrado"}
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Email não cadastrado"
+            )
 
         token = create_reset_token(email)
 

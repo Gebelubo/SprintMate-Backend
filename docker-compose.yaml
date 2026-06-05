@@ -30,6 +30,7 @@ services:
 
     environment:
       DATABASE_URL: postgresql+psycopg2://postgres:123456@postgres:5432/sprintmate_db
+      FRONTEND_URL: http://localhost:5173
       SECRET_KEY: 9f4c2b7a8d3e1f6c0a5b9d8e7f1a2c4b6d9e0f3a7b1c5d8e2f6a9c0b4d7e1f5
       ALGORITHM: HS256
       CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
