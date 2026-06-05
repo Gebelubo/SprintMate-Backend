@@ -167,7 +167,7 @@ class NotificationConfigUpdate(BaseModel):
 
 # --------------- PROJECT -------------------
 
-from src.entities.enums import RoleEnum
+from src.entities.enums import AttachTypeEnum, CommentTypeEnum, RoleEnum
 
 class ProjectCreate(BaseModel):
     name: str
@@ -204,3 +204,46 @@ class ProjectUserResponse(BaseModel):
     role: RoleEnum
 
     model_config = {"from_attributes": True}
+
+class CommentCreate(BaseModel):
+    content: str
+    type: Optional[CommentTypeEnum] = None
+
+
+class CommentUpdate(BaseModel):
+    content: Optional[str] = None
+    type: Optional[CommentTypeEnum] = None
+
+
+class CommentResponse(BaseModel):
+    id: int
+
+    task_id: int
+    user_id: int
+
+    content: str
+    type: Optional[CommentTypeEnum]
+
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {
+        "from_attributes": True
+    }
+
+class AttachmentCreate(BaseModel):
+    url: str
+    type: AttachTypeEnum
+
+
+class AttachmentResponse(BaseModel):
+    id: int
+
+    task_id: int
+
+    url: str
+    type: AttachTypeEnum
+
+    model_config = {
+        "from_attributes": True
+    }
