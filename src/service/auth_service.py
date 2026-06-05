@@ -4,7 +4,7 @@ from jose import jwt, JWTError
 from passlib.context import CryptContext
 from decouple import config
 from src.repositories.user_repository import UserRepository
-from src.service.reset_password import send_reset_email
+from src.service.email_validation import send_reset_email
 from src.service.user_service import UserService
 from sqlalchemy.orm import Session
 from src.entities.schemas import UserCreate
@@ -115,10 +115,12 @@ class AuthService:
 
     async def validation_email(self, email: str):
 
+        token = create_reset_token(email)
+
         await send_reset_email(email, token)
 
         return {
-            "message": "Link de recuperação enviado"
+            "message": "Link de validação enviado"
         }
     
     def reset_password(self, token: str, new_password: str):
@@ -140,8 +142,9 @@ class AuthService:
 
         user = self.user_repository.get_by_email(email)
 
-        user.password = self.user_service._hash_password(new_password)
-
+        user.password_hash = self.user_service._hash_password(
+            new_password
+        )
         self.user_repository.save(user)
 
         return {"message": "Senha alterada com sucesso"}

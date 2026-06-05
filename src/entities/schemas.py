@@ -4,10 +4,10 @@ from datetime import datetime
 import re
 from src.entities.models import SprintStatusEnum
 
+from src.entities.models import TaskTypeEnum, PriorityEnum
 
-# =========================================================
-# USER SCHEMAS
-# =========================================================
+
+# ------------- USER ----------------
 
 class UserCreate(BaseModel):
     name: str
@@ -86,6 +86,120 @@ class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str
 
+# ------------ TAKSKS -----------------
+
+class TaskBase(BaseModel):
+    title: str
+    description: Optional[str] = None
+
+    type: TaskTypeEnum
+    priority: PriorityEnum
+
+    column_id: Optional[int] = None
+    project_id: int
+    sprint_id: Optional[int] = None
+
+    parent_id: Optional[int] = None
+    epic: Optional[int] = None
+
+    estimate: Optional[datetime] = None
+    points: Optional[int] = None
+
+
+class TaskCreate(TaskBase):
+    pass
+
+
+class TaskUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+
+    type: Optional[TaskTypeEnum] = None
+    priority: Optional[PriorityEnum] = None
+
+    column_id: Optional[int] = None
+    project_id: Optional[int] = None
+    sprint_id: Optional[int] = None
+
+    parent_id: Optional[int] = None
+    epic: Optional[int] = None
+
+    estimate: Optional[datetime] = None
+    points: Optional[int] = None
+
+
+class TaskResponse(TaskBase):
+    id: int
+    created_by: int
+
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {
+        "from_attributes": True
+    }
+
+from pydantic import BaseModel
+
+
+class NotificationConfigResponse(BaseModel):
+    id: int
+    user_id: int
+
+    mention: bool
+    late: bool
+    blocked: bool
+
+    model_config = {
+        "from_attributes": True
+    }
+
+
+class NotificationConfigUpdate(BaseModel):
+    mention: bool | None = None
+    late: bool | None = None
+    blocked: bool | None = None
+
+# --------------- PROJECT -------------------
+
+from src.entities.enums import RoleEnum
+
+class ProjectCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+class ProjectUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+class ProjectResponse(BaseModel):
+    id: int
+    name: str
+    description: Optional[str]
+    code: int
+    created_by: int
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+# ---------- PROJECT USER ----------------
+
+class ProjectUserAdd(BaseModel):
+    user_id: int
+    role: RoleEnum
+
+class ProjectUserUpdateRole(BaseModel):
+    role: RoleEnum
+
+class ProjectUserResponse(BaseModel):
+    id: int
+    user_id: int
+    project_id: int
+    role: RoleEnum
+
+    model_config = {"from_attributes": True}
+
 class SprintCreate(BaseModel):
     name: str
     project_id: int
@@ -104,3 +218,17 @@ class SprintUpdate(BaseModel):
     status: SprintStatusEnum | None = None
     goal: str | None = None
     points: int | None = None
+
+class SprintResponse(BaseModel):
+    id: int
+    name: str
+    project_id: int
+    start_date: datetime
+    end_date: datetime
+    status: SprintStatusEnum
+    goal: str | None
+    points: int | None
+
+    model_config = {
+        "from_attributes": True
+    }
