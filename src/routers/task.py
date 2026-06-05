@@ -34,7 +34,6 @@ def create_task(
         data=data,
         created_by=current_user.id
     )
-    print("TASK:", task)
     return task
 
 
@@ -59,39 +58,6 @@ def get_task(
         )
 
     return task
-
-
-@router.get(
-    "/project/{project_id}",
-    response_model=list[TaskResponse]
-)
-def get_tasks_by_project(
-    project_id: int,
-    service: TaskService = Depends(get_task_service)
-):
-    return service.get_tasks_by_project(project_id)
-
-
-@router.get(
-    "/sprint/{sprint_id}",
-    response_model=list[TaskResponse]
-)
-def get_tasks_by_sprint(
-    sprint_id: int,
-    service: TaskService = Depends(get_task_service)
-):
-    return service.get_tasks_by_sprint(sprint_id)
-
-
-@router.get(
-    "/column/{column_id}",
-    response_model=list[TaskResponse]
-)
-def get_tasks_by_column(
-    column_id: int,
-    service: TaskService = Depends(get_task_service)
-):
-    return service.get_tasks_by_column(column_id)
 
 
 @router.put(

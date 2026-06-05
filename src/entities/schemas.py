@@ -110,8 +110,11 @@ class TaskBase(BaseModel):
     points: Optional[int] = None
 
 
-class TaskCreate(TaskBase):
-    pass
+class TaskCreate(BaseModel):
+    title: str
+    type: TaskTypeEnum
+    priority: PriorityEnum
+    project_id: int
 
 
 class TaskUpdate(BaseModel):
@@ -142,8 +145,6 @@ class TaskResponse(TaskBase):
     model_config = {
         "from_attributes": True
     }
-
-from pydantic import BaseModel
 
 
 class NotificationConfigResponse(BaseModel):
