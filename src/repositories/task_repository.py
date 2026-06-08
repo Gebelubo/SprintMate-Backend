@@ -19,16 +19,9 @@ class TaskRepository:
 
         task = Task(
             title=data.title,
-            description=data.description,
             type=data.type,
             priority=data.priority,
-            column_id=data.column_id,
             project_id=data.project_id,
-            sprint_id=data.sprint_id,
-            parent_id=data.parent_id,
-            epic=data.epic,
-            estimate=data.estimate,
-            points=data.points,
             created_by=created_by
         )
 

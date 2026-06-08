@@ -18,6 +18,8 @@ app.include_router(auth.router)
 app.include_router(task.router)
 app.include_router(me.router)
 app.include_router(project.router)
+app.include_router(task.comment_router)
+app.include_router(task.attachment_router)
 
 @app.on_event("startup")
 async def startup_event():

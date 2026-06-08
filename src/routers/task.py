@@ -1,8 +1,16 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 
+from src.service.attachment_service import AttachmentService
+from src.service.comment_service import CommentService
 from src.db.deps import get_db
 from src.entities.schemas import (
+    AttachmentCreate,
+    AttachmentCreate,
+    AttachmentResponse,
+    CommentCreate,
+    CommentResponse,
+    CommentUpdate,
     TaskCreate,
     TaskUpdate,
     TaskResponse
@@ -17,11 +25,30 @@ router = APIRouter(
     tags=["Tasks"]
 )
 
+comment_router = APIRouter(
+    prefix="/comments",
+    tags=["Comments"]
+)
+
+attachment_router = APIRouter(
+    prefix="/attachments",
+    tags=["Attachments"]
+)
 
 def get_task_service(
     db: Session = Depends(get_db)
 ) -> TaskService:
     return TaskService(db)
+
+def get_comment_service(
+    db: Session = Depends(get_db)
+):
+    return CommentService(db)
+
+def get_attachment_service(
+    db: Session = Depends(get_db)
+):
+    return AttachmentService(db)
 
 
 @router.post("/", response_model=TaskResponse)
@@ -34,7 +61,6 @@ def create_task(
         data=data,
         created_by=current_user.id
     )
-    print("TASK:", task)
     return task
 
 
@@ -59,39 +85,6 @@ def get_task(
         )
 
     return task
-
-
-@router.get(
-    "/project/{project_id}",
-    response_model=list[TaskResponse]
-)
-def get_tasks_by_project(
-    project_id: int,
-    service: TaskService = Depends(get_task_service)
-):
-    return service.get_tasks_by_project(project_id)
-
-
-@router.get(
-    "/sprint/{sprint_id}",
-    response_model=list[TaskResponse]
-)
-def get_tasks_by_sprint(
-    sprint_id: int,
-    service: TaskService = Depends(get_task_service)
-):
-    return service.get_tasks_by_sprint(sprint_id)
-
-
-@router.get(
-    "/column/{column_id}",
-    response_model=list[TaskResponse]
-)
-def get_tasks_by_column(
-    column_id: int,
-    service: TaskService = Depends(get_task_service)
-):
-    return service.get_tasks_by_column(column_id)
 
 
 @router.put(
@@ -128,4 +121,177 @@ def delete_task(
         raise HTTPException(
             status_code=404,
             detail="Task not found"
+        )
+    
+@router.get(
+    "/{task_id}/comments",
+    response_model=list[CommentResponse]
+)
+def list_comments(
+    task_id: int,
+    service: CommentService = Depends(
+        get_comment_service
+    )
+):
+    return service.get_task_comments(task_id)
+
+
+@router.post(
+    "/{task_id}/comments",
+    response_model=CommentResponse
+)
+def create_comment(
+    task_id: int,
+    data: CommentCreate,
+    current_user: User = Depends(
+        get_current_user
+    ),
+    service: CommentService = Depends(
+        get_comment_service
+    )
+):
+    return service.create_comment(
+        task_id=task_id,
+        user_id=current_user.id,
+        data=data
+    )
+
+@comment_router.get(
+    "/{comment_id}",
+    response_model=CommentResponse
+)
+def get_comment(
+    comment_id: int,
+    service: CommentService = Depends(
+        get_comment_service
+    )
+):
+    comment = service.get_comment(comment_id)
+
+    if not comment:
+        raise HTTPException(
+            404,
+            "Comment not found"
+        )
+
+    return comment
+
+
+@comment_router.patch(
+    "/{comment_id}",
+    response_model=CommentResponse
+)
+def update_comment(
+    comment_id: int,
+    data: CommentUpdate,
+    service: CommentService = Depends(
+        get_comment_service
+    )
+):
+    comment = service.update_comment(
+        comment_id,
+        data
+    )
+
+    if not comment:
+        raise HTTPException(
+            404,
+            "Comment not found"
+        )
+
+    return comment
+
+
+@comment_router.delete(
+    "/{comment_id}",
+    status_code=204
+)
+def delete_comment(
+    comment_id: int,
+    service: CommentService = Depends(
+        get_comment_service
+    )
+):
+    deleted = service.delete_comment(
+        comment_id
+    )
+
+    if not deleted:
+        raise HTTPException(
+            404,
+            "Comment not found"
+        )
+    
+@router.get(
+    "/{task_id}/attachments",
+    response_model=list[AttachmentResponse]
+)
+def list_attachments(
+    task_id: int,
+    service: AttachmentService = Depends(
+        get_attachment_service
+    )
+):
+    return service.get_task_attachments(
+        task_id
+    )
+
+
+@router.post(
+    "/{task_id}/attachments",
+    response_model=AttachmentResponse
+)
+def create_attachment(
+    task_id: int,
+    data: AttachmentCreate,
+    service: AttachmentService = Depends(
+        get_attachment_service
+    )
+):
+    return service.create_attachment(
+        task_id,
+        data
+    )
+
+@attachment_router.get(
+    "/{attachment_id}",
+    response_model=AttachmentResponse
+)
+def get_attachment(
+    attachment_id: int,
+    service: AttachmentService = Depends(
+        get_attachment_service
+    )
+):
+    attachment = service.get_attachment(
+        attachment_id
+    )
+
+    if not attachment:
+        raise HTTPException(
+            404,
+            "Attachment not found"
+        )
+
+    return attachment
+
+
+@attachment_router.delete(
+    "/{attachment_id}",
+    status_code=204
+)
+def delete_attachment(
+    attachment_id: int,
+    service: AttachmentService = Depends(
+        get_attachment_service
+    )
+):
+    deleted = service.delete_attachment(
+        attachment_id
+    )
+
+    if not deleted:
+        raise HTTPException(
+            404,
+            "Attachment not found"
         )
