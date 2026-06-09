@@ -30,7 +30,7 @@ async def send_validation_email(email: str):
     reset_link = f"{FRONTEND_URL}/auth/check-email?email={email}"
 
     message = MessageSchema(
-        subject="Recuperação de Senha",
+        subject="Validação de Cadastro",
         recipients=[email],
         body=f"""
         Olá,
