@@ -16,7 +16,7 @@ services:
       - "5432:5432"
 
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - sprint_mate_postgres_data:/var/lib/postgresql/data
 
   app:
     build: .
@@ -58,4 +58,4 @@ services:
       - postgres
 
 volumes:
-  postgres_data:
+  sprint_mate_postgres_data:
