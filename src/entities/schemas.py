@@ -250,3 +250,24 @@ class AttachmentResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+# ----------- BOARD COLUMN ----------------
+
+class BoardColumnCreate(BaseModel):
+    name: str
+    order: int = 0
+
+class BoardColumnUpdate(BaseModel):
+    name: Optional[str] = None
+    order: Optional[int] = None
+
+class BoardColumnResponse(BaseModel):
+    id: int
+    name: Optional[str]
+    order: Optional[int]
+    project_id: Optional[int]
+
+    model_config = {"from_attributes": True}
+
+class TaskMoveRequest(BaseModel):
+    column_id: int

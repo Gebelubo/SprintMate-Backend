@@ -1,6 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 
+from src.service.board_service import BoardService
+from src.entities.schemas import TaskMoveRequest
 from src.service.attachment_service import AttachmentService
 from src.service.comment_service import CommentService
 from src.db.deps import get_db
@@ -295,3 +297,21 @@ def delete_attachment(
             404,
             "Attachment not found"
         )
+
+# --- Board move ---
+
+def get_board_service(db: Session = Depends(get_db)) -> BoardService:
+    return BoardService(db)
+
+
+@router.patch("/{task_id}/move", response_model=TaskResponse)
+def move_task(
+    task_id: int,
+    data: TaskMoveRequest,
+    current_user: User = Depends(get_current_user),
+    board_service: BoardService = Depends(get_board_service),
+):
+    task = board_service.move_task(task_id, data.column_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task or column not found")
+    return task
