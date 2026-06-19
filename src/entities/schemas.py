@@ -205,6 +205,9 @@ class ProjectUserResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
+class ProjectWithRoleResponse(ProjectResponse):
+    role: RoleEnum
+
 class CommentCreate(BaseModel):
     content: str
     type: Optional[CommentTypeEnum] = None
