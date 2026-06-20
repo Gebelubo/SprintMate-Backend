@@ -6,8 +6,11 @@ from src.entities.models import User
 from src.entities.schemas import (
     ProjectCreate, ProjectUpdate, ProjectResponse,
     ProjectUserAdd, ProjectUserUpdateRole, ProjectUserResponse,
+    BoardColumnCreate, BoardColumnUpdate, BoardColumnResponse,
+    TaskResponse,
 )
 from src.service.project_service import ProjectService
+from src.service.board_service import BoardService
 from src.utils.dependencies import get_current_user
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
@@ -121,3 +124,79 @@ def remove_user(
     removed = service.remove_user_from_project(project_id, user_id)
     if not removed:
         raise HTTPException(status_code=404, detail="User not found in project")
+
+# --- Board columns ---
+
+def get_board_service(db: Session = Depends(get_db)) -> BoardService:
+    return BoardService(db)
+
+
+@router.get("/{project_id}/columns", response_model=list[BoardColumnResponse])
+def get_columns(
+    project_id: int,
+    current_user: User = Depends(get_current_user),
+    service: BoardService = Depends(get_board_service),
+):
+    return service.get_project_columns(project_id)
+
+
+@router.post("/{project_id}/columns", response_model=BoardColumnResponse)
+def create_column(
+    project_id: int,
+    data: BoardColumnCreate,
+    current_user: User = Depends(get_current_user),
+    service: BoardService = Depends(get_board_service),
+):
+    column = service.create_column(project_id, data)
+    if not column:
+        raise HTTPException(status_code=400, detail="Could not create column")
+    return column
+
+
+@router.put("/{project_id}/columns/{column_id}", response_model=BoardColumnResponse)
+def update_column(
+    project_id: int,
+    column_id: int,
+    data: BoardColumnUpdate,
+    current_user: User = Depends(get_current_user),
+    service: BoardService = Depends(get_board_service),
+):
+    column = service.update_column(column_id, data)
+    if not column:
+        raise HTTPException(status_code=404, detail="Column not found")
+    return column
+
+
+@router.delete("/{project_id}/columns/{column_id}", status_code=204)
+def delete_column(
+    project_id: int,
+    column_id: int,
+    current_user: User = Depends(get_current_user),
+    service: BoardService = Depends(get_board_service),
+):
+    deleted = service.delete_column(column_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Column not found")
+
+
+@router.get("/{project_id}/columns/{column_id}", response_model=BoardColumnResponse)
+def get_column_by_id(
+    project_id: int,
+    column_id: int,
+    current_user: User = Depends(get_current_user),
+    service: BoardService = Depends(get_board_service),
+):
+    column = service.get_column(column_id)
+    if not column:
+        raise HTTPException(status_code=404, detail="Column not found")
+    return column
+
+
+@router.get("/{project_id}/columns/{column_id}/tasks", response_model=list[TaskResponse])
+def get_column_tasks(
+    project_id: int,
+    column_id: int,
+    current_user: User = Depends(get_current_user),
+    service: BoardService = Depends(get_board_service),
+):
+    return service.get_column_tasks(column_id)
