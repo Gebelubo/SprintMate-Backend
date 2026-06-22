@@ -10,8 +10,12 @@ class ProjectService:
         self.repository = ProjectRepository(db)
 
     def create_project(self, data: ProjectCreate, created_by: int) -> Project | None:
-        return self.repository.create(data, created_by)
-
+        try:
+            response = self.repository.create(data, created_by)
+            self.repository.add_user(response.id, ProjectUserAdd(user_id=created_by, role="OWNER"))
+        except Exception as e:
+            raise e
+        return response
     def get_all_projects(self) -> list[Project]:
         return self.repository.get_all()
 

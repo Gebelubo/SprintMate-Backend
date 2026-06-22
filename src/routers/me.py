@@ -5,7 +5,7 @@ from src.service.notification_config_service import NotificationConfigService
 from src.service.notification_service import NotificationService
 from src.utils.dependencies import get_current_user
 from src.entities.models import User
-from src.entities.schemas import NotificationConfigResponse, NotificationConfigUpdate, UserResponse
+from src.entities.schemas import NotificationConfigResponse, NotificationConfigUpdate, UserResponse, ProjectWithRoleResponse
 from src.db.deps import get_db
 
 from src.service.me_service import MeService
@@ -31,7 +31,7 @@ def get_me(
 ):
     return current_user
 
-@router.get("/me/projects")
+@router.get("/me/projects", response_model=list[ProjectWithRoleResponse])
 def my_projects(
     current_user: User = Depends(get_current_user)
 ):
