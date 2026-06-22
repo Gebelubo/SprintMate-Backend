@@ -4,6 +4,7 @@ from src.config import conf, FRONTEND_URL
 async def send_reset_email(email: str, token: str):
 
     reset_link = f"{FRONTEND_URL}/auth/reset-password?token={token}"
+    print("Entrou em send_reset_email")
 
     message = MessageSchema(
         subject="Recuperação de Senha",
@@ -22,6 +23,7 @@ async def send_reset_email(email: str, token: str):
     )
 
     fm = FastMail(conf)
+    print("SAIUUUU")
     await fm.send_message(message)
 
 
