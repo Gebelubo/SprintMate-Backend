@@ -271,3 +271,7 @@ class BoardColumnResponse(BaseModel):
 
 class TaskMoveRequest(BaseModel):
     column_id: int
+
+
+class ProjectInvite(BaseModel):
+    email: str
