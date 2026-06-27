@@ -14,6 +14,15 @@ class ProjectRepository:
     def __init__(self, db: Session):
         self.db = db
 
+    def _normalize_role(self, role: RoleEnum | str) -> str:
+        role_value = role.value if isinstance(role, RoleEnum) else str(role)
+        role_value = role_value.upper()
+        
+        if role_value == "DEV":
+            return "MEMBER"
+
+        return role_value
+
     def _generate_unique_code(self) -> int:
         while True:
             code = random.randint(10000, 99999)
@@ -80,7 +89,7 @@ class ProjectRepository:
         assoc = ProjectUser(
             project_id=project_id,
             user_id=data.user_id,
-            role=data.role.lower(),
+            role=self._normalize_role(data.role),
         )
         self.db.add(assoc)
         try:
@@ -105,7 +114,7 @@ class ProjectRepository:
         assoc = self.get_project_user(project_id, user_id)
         if not assoc:
             return None
-        assoc.role = role.lower()
+        assoc.role = self._normalize_role(role)
         self.db.commit()
         self.db.refresh(assoc)
         return assoc
