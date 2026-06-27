@@ -2,6 +2,8 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
+from sqlalchemy.orm import joinedload
+
 from src.entities.models import Project, ProjectUser
 from src.entities.schemas import ProjectCreate, ProjectUpdate, ProjectUserAdd
 from src.entities.enums import RoleEnum
@@ -66,9 +68,10 @@ class ProjectRepository:
 
     # --- Project members ---
 
-    def get_users(self, project_id: int) -> list[ProjectUser]:
+    def get_users(self, project_id: int):
         return (
             self.db.query(ProjectUser)
+            .options(joinedload(ProjectUser.user))
             .filter(ProjectUser.project_id == project_id)
             .all()
         )

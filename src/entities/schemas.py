@@ -271,3 +271,9 @@ class BoardColumnResponse(BaseModel):
 
 class TaskMoveRequest(BaseModel):
     column_id: int
+
+class ProjectUserResponseWithUser(BaseModel):
+    id: int
+    user_name: str
+    project_id: int
+    role: RoleEnum

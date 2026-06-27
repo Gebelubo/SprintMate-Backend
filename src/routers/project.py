@@ -7,7 +7,7 @@ from src.entities.schemas import (
     ProjectCreate, ProjectUpdate, ProjectResponse,
     ProjectUserAdd, ProjectUserUpdateRole, ProjectUserResponse,
     BoardColumnCreate, BoardColumnUpdate, BoardColumnResponse,
-    TaskResponse,
+    TaskResponse, ProjectUserResponseWithUser
 )
 from src.service.project_service import ProjectService
 from src.service.board_service import BoardService
@@ -78,7 +78,7 @@ def delete_project(
 
 # --- Project members ---
 
-@router.get("/{project_id}/users", response_model=list[ProjectUserResponse])
+@router.get("/{project_id}/users", response_model=list[ProjectUserResponseWithUser])
 def get_project_users(
     project_id: int,
     current_user: User = Depends(get_current_user),

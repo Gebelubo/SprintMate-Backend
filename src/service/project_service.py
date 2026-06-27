@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from src.entities.models import Project, ProjectUser
 from src.entities.schemas import ProjectCreate, ProjectUpdate, ProjectUserAdd, ProjectUserUpdateRole
 from src.repositories.project_repository import ProjectRepository
+from src.entities.schemas import ProjectUserResponseWithUser
 
 
 class ProjectService:
@@ -28,8 +29,23 @@ class ProjectService:
     def delete_project(self, project_id: int) -> bool:
         return self.repository.delete(project_id)
 
-    def get_project_users(self, project_id: int) -> list[ProjectUser]:
-        return self.repository.get_users(project_id)
+
+    def get_project_users(
+        self,
+        project_id: int
+    ) -> list[ProjectUserResponseWithUser]:
+
+        users = self.repository.get_users(project_id)
+
+        return [
+            ProjectUserResponseWithUser(
+                id=user.id,
+                user_name=user.user.name,
+                project_id=user.project_id,
+                role=user.role
+            )
+            for user in users
+        ]
 
     def add_user_to_project(self, project_id: int, data: ProjectUserAdd) -> ProjectUser | None:
         return self.repository.add_user(project_id, data)
