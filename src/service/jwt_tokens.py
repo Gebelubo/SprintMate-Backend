@@ -8,7 +8,7 @@ ALGORITHM = config("ALGORITHM")
 def create_access_token(data: dict):
     payload = data.copy()
 
-    expire = datetime.now(UTC) + timedelta(minutes=30)
+    expire = datetime.now(UTC) + timedelta(minutes=1440)
 
     payload.update({
         "exp": expire,
