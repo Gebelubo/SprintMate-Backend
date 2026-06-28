@@ -2,6 +2,8 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
+from sqlalchemy.orm import joinedload
+
 from src.entities.models import Project, ProjectUser
 from src.entities.schemas import ProjectCreate, ProjectUpdate, ProjectUserAdd
 from src.entities.enums import RoleEnum
@@ -11,6 +13,15 @@ import random
 class ProjectRepository:
     def __init__(self, db: Session):
         self.db = db
+
+    def _normalize_role(self, role: RoleEnum | str) -> str:
+        role_value = role.value if isinstance(role, RoleEnum) else str(role)
+        role_value = role_value.upper()
+        
+        if role_value == "DEV":
+            return "MEMBER"
+
+        return role_value
 
     def _generate_unique_code(self) -> int:
         while True:
@@ -66,9 +77,10 @@ class ProjectRepository:
 
     # --- Project members ---
 
-    def get_users(self, project_id: int) -> list[ProjectUser]:
+    def get_users(self, project_id: int):
         return (
             self.db.query(ProjectUser)
+            .options(joinedload(ProjectUser.user))
             .filter(ProjectUser.project_id == project_id)
             .all()
         )
@@ -77,7 +89,7 @@ class ProjectRepository:
         assoc = ProjectUser(
             project_id=project_id,
             user_id=data.user_id,
-            role=data.role.lower(),
+            role=self._normalize_role(data.role),
         )
         self.db.add(assoc)
         try:
@@ -102,7 +114,7 @@ class ProjectRepository:
         assoc = self.get_project_user(project_id, user_id)
         if not assoc:
             return None
-        assoc.role = role.lower()
+        assoc.role = self._normalize_role(role)
         self.db.commit()
         self.db.refresh(assoc)
         return assoc
