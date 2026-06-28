@@ -277,3 +277,7 @@ class ProjectUserResponseWithUser(BaseModel):
     user_name: str
     project_id: int
     role: RoleEnum
+
+
+class ProjectInvite(BaseModel):
+    email: str

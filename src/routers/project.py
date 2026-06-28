@@ -7,7 +7,7 @@ from src.entities.schemas import (
     ProjectCreate, ProjectUpdate, ProjectResponse,
     ProjectUserAdd, ProjectUserUpdateRole, ProjectUserResponse,
     BoardColumnCreate, BoardColumnUpdate, BoardColumnResponse,
-    TaskResponse, ProjectUserResponseWithUser
+    TaskResponse, ProjectInvite, ProjectUserResponseWithUser
 )
 from src.service.project_service import ProjectService
 from src.service.board_service import BoardService
@@ -200,3 +200,43 @@ def get_column_tasks(
     service: BoardService = Depends(get_board_service),
 ):
     return service.get_column_tasks(column_id)
+
+@router.post("/{project_id}/join/{role}")
+def join_project(
+    project_id: int,
+    role: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    service = ProjectService(db)
+
+    # Verifica se projeto existe
+    project = service.get_project(project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Tenta adicionar — trata se já for membro
+    try:
+        service.add_user_to_project(
+            project_id,
+            ProjectUserAdd(
+                user_id=current_user.id,
+                role=role.upper()  # ← normaliza para maiúsculo
+            )
+        )
+    except Exception as e:
+        # Se já é membro, considera sucesso silencioso
+        if "unique" in str(e).lower() or "duplicate" in str(e).lower() or "already" in str(e).lower():
+            return {"message": "Already a member"}
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return {"message": "Project joined successfully"}
+@router.post("/{project_id}/invite")
+def invite_user(
+    project_id: int,
+    data: ProjectInvite,
+    current_user: User = Depends(get_current_user),  # ← adicionar
+    db: Session = Depends(get_db)
+):
+    service = ProjectService(db)
+    return service.invite_user(project_id, data.email)
