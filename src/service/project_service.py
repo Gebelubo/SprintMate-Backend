@@ -13,7 +13,7 @@ class ProjectService:
     def create_project(self, data: ProjectCreate, created_by: int) -> Project | None:
         try:
             response = self.repository.create(data, created_by)
-            self.repository.add_user(response.id, ProjectUserAdd(user_id=created_by, role="OWNER"))
+            self.repository.add_user(response.id, ProjectUserAdd(user_id=created_by, role="owner"))
         except Exception as e:
             raise e
         return response

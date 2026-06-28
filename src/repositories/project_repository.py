@@ -89,7 +89,7 @@ class ProjectRepository:
         assoc = ProjectUser(
             project_id=project_id,
             user_id=data.user_id,
-            role=self._normalize_role(data.role),
+            role=data.role.lower(),
         )
         self.db.add(assoc)
         try:
@@ -114,7 +114,7 @@ class ProjectRepository:
         assoc = self.get_project_user(project_id, user_id)
         if not assoc:
             return None
-        assoc.role = self._normalize_role(role)
+        assoc.role = role.lower()
         self.db.commit()
         self.db.refresh(assoc)
         return assoc
