@@ -7,7 +7,7 @@ from src.entities.schemas import (
     ProjectCreate, ProjectUpdate, ProjectResponse,
     ProjectUserAdd, ProjectUserUpdateRole, ProjectUserResponse,
     BoardColumnCreate, BoardColumnUpdate, BoardColumnResponse,
-    TaskResponse, ProjectUserResponseWithUser
+    TaskResponse, ProjectInvite, ProjectUserResponseWithUser
 )
 from src.service.project_service import ProjectService
 from src.service.board_service import BoardService
@@ -200,3 +200,34 @@ def get_column_tasks(
     service: BoardService = Depends(get_board_service),
 ):
     return service.get_column_tasks(column_id)
+
+@router.post("/{project_id}/join/{role}")
+def join_project(
+    project_id: int,
+    role: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    service = ProjectService(db)
+
+    service.add_user_to_project(
+        project_id,
+        ProjectUserAdd(
+            user_id=current_user.id,
+            role=role
+        )
+    )
+
+    return {
+        "message": "Project joined successfully"
+    }
+
+@router.post("/{project_id}/invite")
+def invite_user(
+    project_id: int,
+    data: ProjectInvite,
+    current_user: User = Depends(get_current_user),  # ← adicionar
+    db: Session = Depends(get_db)
+):
+    service = ProjectService(db)
+    return service.invite_user(project_id, data.email)

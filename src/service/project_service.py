@@ -5,7 +5,7 @@ from src.entities.schemas import ProjectCreate, ProjectUpdate, ProjectUserAdd, P
 from src.repositories.project_repository import ProjectRepository
 from src.entities.schemas import ProjectUserResponseWithUser
 
-
+from src.utils.send_email import send_project_invite_email
 class ProjectService:
     def __init__(self, db: Session):
         self.repository = ProjectRepository(db)
@@ -56,3 +56,36 @@ class ProjectService:
 
     def remove_user_from_project(self, project_id: int, user_id: int) -> bool:
         return self.repository.remove_user(project_id, user_id)
+    
+    def invite_user(
+        self,
+        project_id: int,
+        email: str
+    ):
+        project = self.repository.get_by_id(project_id)
+
+        if project is None:
+            raise Exception("Project not found")
+
+        invite_link = (
+            f"http://localhost:5173/invite/{project_id}"
+        )
+
+        send_project_invite_email(
+            email=email,
+            project_id=project_id,
+            subject=f"Convite para o projeto {project.name}",
+            body=f"""
+            Você foi convidado para participar do projeto:
+
+            {project.name}
+
+            Clique no link abaixo:
+
+            {invite_link}
+            """
+                    )
+
+        return {
+                        "message": "Invitation sent successfully"
+                    }
