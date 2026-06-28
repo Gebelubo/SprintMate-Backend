@@ -274,7 +274,6 @@ class TaskMoveRequest(BaseModel):
 
 class ProjectUserResponseWithUser(BaseModel):
     id: int
-    name: str
     user_name: str
     project_id: int
     role: RoleEnum

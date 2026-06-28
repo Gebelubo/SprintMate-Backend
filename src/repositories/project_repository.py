@@ -14,15 +14,6 @@ class ProjectRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def _normalize_role(self, role: RoleEnum | str) -> str:
-        role_value = role.value if isinstance(role, RoleEnum) else str(role)
-        role_value = role_value.upper()
-        
-        if role_value == "DEV":
-            return "MEMBER"
-
-        return role_value
-
     def _generate_unique_code(self) -> int:
         while True:
             code = random.randint(10000, 99999)
