@@ -7,7 +7,6 @@ import enum
 class RoleEnum(enum.Enum):
     OWNER = "OWNER"
     ADMIN = "ADMIN"
-    MEMBER = "MEMBER"
     DEV = "DEV"
 
 
