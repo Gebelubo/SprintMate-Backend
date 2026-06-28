@@ -4,6 +4,7 @@ from src.entities.models import Project, ProjectUser
 from src.entities.schemas import ProjectCreate, ProjectUpdate, ProjectUserAdd, ProjectUserUpdateRole
 from src.repositories.project_repository import ProjectRepository
 from src.entities.schemas import ProjectUserResponseWithUser
+from src.entities.enums import RoleEnum
 
 from src.utils.send_email import send_project_invite_email
 class ProjectService:
@@ -13,7 +14,7 @@ class ProjectService:
     def create_project(self, data: ProjectCreate, created_by: int) -> Project | None:
         try:
             response = self.repository.create(data, created_by)
-            self.repository.add_user(response.id, ProjectUserAdd(user_id=created_by, role="owner"))
+            self.repository.add_user(response.id, ProjectUserAdd(user_id=created_by, role=RoleEnum.OWNER.value))
         except Exception as e:
             raise e
         return response
