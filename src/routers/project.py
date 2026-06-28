@@ -210,18 +210,27 @@ def join_project(
 ):
     service = ProjectService(db)
 
-    service.add_user_to_project(
-        project_id,
-        ProjectUserAdd(
-            user_id=current_user.id,
-            role=role
+    # Verifica se projeto existe
+    project = service.get_project(project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Tenta adicionar — trata se já for membro
+    try:
+        service.add_user_to_project(
+            project_id,
+            ProjectUserAdd(
+                user_id=current_user.id,
+                role=role.upper()  # ← normaliza para maiúsculo
+            )
         )
-    )
+    except Exception as e:
+        # Se já é membro, considera sucesso silencioso
+        if "unique" in str(e).lower() or "duplicate" in str(e).lower() or "already" in str(e).lower():
+            return {"message": "Already a member"}
+        raise HTTPException(status_code=400, detail=str(e))
 
-    return {
-        "message": "Project joined successfully"
-    }
-
+    return {"message": "Project joined successfully"}
 @router.post("/{project_id}/invite")
 def invite_user(
     project_id: int,
