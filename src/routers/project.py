@@ -8,7 +8,8 @@ from src.entities.schemas import (
     ProjectUserAdd, ProjectUserUpdateRole, ProjectUserResponse,
     BoardColumnCreate, BoardColumnUpdate, BoardColumnResponse,
     TaskResponse, ProjectInvite, ProjectUserResponseWithUser
-)
+) 
+from src.entities.enums import RoleEnum
 from src.service.project_service import ProjectService
 from src.service.board_service import BoardService
 from src.utils.dependencies import get_current_user
@@ -201,42 +202,48 @@ def get_column_tasks(
 ):
     return service.get_column_tasks(column_id)
 
-@router.post("/{project_id}/join/{role}")
+@router.post("/{project_id}/join/{role_str}")
 def join_project(
     project_id: int,
-    role: str,
+    role_str: str,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     service = ProjectService(db)
 
-    # Verifica se projeto existe
+    # 1. Valida se o role é válido
+    try:
+        role = RoleEnum(role_str)
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"'{role_str}' is not a valid role.")
+
+    # 2. Verifica se o projeto existe
     project = service.get_project(project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    # Tenta adicionar — trata se já for membro
+    # 3. Tenta adicionar o usuário ao projeto
     try:
-        service.add_user_to_project(
+        assoc = service.add_user_to_project(
             project_id,
-            ProjectUserAdd(
-                user_id=current_user.id,
-                role=role.upper()  # ← normaliza para maiúsculo
-            )
+            ProjectUserAdd(user_id=current_user.id, role=role)
         )
-    except Exception as e:
-        # Se já é membro, considera sucesso silencioso
-        if "unique" in str(e).lower() or "duplicate" in str(e).lower() or "already" in str(e).lower():
-            return {"message": "Already a member"}
-        raise HTTPException(status_code=400, detail=str(e))
+        if not assoc:
+            # Se o usuário já for membro, o repositório retorna None
+            raise HTTPException(status_code=409, detail="User is already a member of this project.")
+    except HTTPException as e:
+        raise e # Re-lança exceções HTTP já tratadas
+    except Exception:
+        raise HTTPException(status_code=500, detail="Could not add user to project due to an internal error.")
 
     return {"message": "Project joined successfully"}
-@router.post("/{project_id}/invite")
-def invite_user(
+@router.post("/{project_id}/invite", status_code=200)
+async def invite_user(
     project_id: int,
     data: ProjectInvite,
     current_user: User = Depends(get_current_user),  # ← adicionar
     db: Session = Depends(get_db)
 ):
     service = ProjectService(db)
-    return service.invite_user(project_id, data.email)
+    response = await service.invite_user(project_id, data.email)
+    return response
