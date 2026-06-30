@@ -30,6 +30,8 @@ class ProjectService:
     def delete_project(self, project_id: int) -> bool:
         return self.repository.delete(project_id)
 
+    def is_project_member(self, project_id: int, user_id: int) -> bool:
+        return self.repository.get_project_user(project_id, user_id) is not None
 
     def get_project_users(
         self,
@@ -76,4 +78,3 @@ class ProjectService:
         return {
             "message": "Invitation sent successfully"
         }
-    

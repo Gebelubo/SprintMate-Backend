@@ -250,7 +250,7 @@ async def invite_user(
     response = await service.invite_user(project_id, data.email)
     return response
 
-@router.post("/{project_id}/sprint", status_code=200)
+@router.post("/{project_id}/sprints", status_code=200)
 def create_sprint_in_project(
     project_id: int,
     data: SprintProjectCreate,
@@ -259,10 +259,24 @@ def create_sprint_in_project(
    service = SprintService(db) 
    return service.create_sprint_in_project(data, project_id)
 
-@router.get("/{project_id}/sprint", status_code=200)
+@router.get("/{project_id}/sprints", status_code=200)
 def get_project_sprints(
     project_id: int,
     db: Session = Depends(get_db)
 ):
     service = SprintService(db) 
     return service.get_project_sprints(project_id)
+
+@router.post("/{project_id}/sprints/{sprint_id}/start", status_code=200)
+def start_sprint(
+    project_id: int,
+    sprint_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    project_service = ProjectService(db)
+    if not project_service.is_project_member(project_id, current_user.id):
+        raise HTTPException(status_code=403, detail="You must be a member of this project to start a sprint")
+
+    service = SprintService(db)
+    return service.start_sprint(project_id, sprint_id)

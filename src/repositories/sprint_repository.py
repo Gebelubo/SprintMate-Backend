@@ -121,3 +121,20 @@ class SprintRepository:
     
     def get_project_sprints(self, project_id: int) -> list[Sprint]:
         return self.db.query(Sprint).filter(Sprint.project_id==project_id).all()
+
+    def get_by_id_in_project(self, sprint_id: int, project_id: int) -> Sprint | None:
+        return (
+            self.db.query(Sprint)
+            .filter(Sprint.id == sprint_id, Sprint.project_id == project_id)
+            .first()
+        )
+
+    def start(self, sprint_id: int) -> Sprint:
+        sprint = self.get_by_id(sprint_id)
+
+        sprint.status = SprintStatusEnum.ACTIVE
+
+        self.db.commit()
+        self.db.refresh(sprint)
+
+        return sprint

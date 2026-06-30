@@ -1,6 +1,8 @@
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from src.entities.models import Sprint
+from src.entities.enums import SprintStatusEnum
 from src.entities.schemas import SprintCreate, SprintUpdate, SprintProjectCreate
 from src.repositories.sprint_repository import SprintRepository
 
@@ -53,3 +55,21 @@ class SprintService:
         project_id: int,
     ):
         return self.repository.get_project_sprints(project_id)
+
+    def start_sprint(
+        self,
+        project_id: int,
+        sprint_id: int,
+    ) -> Sprint:
+        sprint = self.repository.get_by_id_in_project(sprint_id, project_id)
+
+        if sprint is None:
+            raise HTTPException(status_code=404, detail="Sprint not found in this project")
+
+        if sprint.status == SprintStatusEnum.ACTIVE:
+            raise HTTPException(status_code=400, detail="Sprint is already active")
+
+        if sprint.status == SprintStatusEnum.FINISHED:
+            raise HTTPException(status_code=400, detail="Cannot start a sprint that is already finished")
+
+        return self.repository.start(sprint_id)
