@@ -15,7 +15,7 @@ class SprintRepository:
             project_id=data.project_id,
             start_date=data.start_date,
             end_date=data.end_date,
-            status=SprintStatusEnum.NOSTATUS,
+            status=SprintStatusEnum.PLANNED,
             goal=None,
             points=0,
         )
@@ -32,7 +32,7 @@ class SprintRepository:
             project_id=project_id,
             start_date=data.start_date,
             end_date=data.end_date,
-            status=SprintStatusEnum.NOSTATUS,
+            status=SprintStatusEnum.PLANNED,
             goal=None,
             points=None,
         )
