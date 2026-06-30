@@ -73,3 +73,18 @@ class SprintService:
             raise HTTPException(status_code=400, detail="Cannot start a sprint that is already finished")
 
         return self.repository.start(sprint_id)
+    
+    def get_all_tasks(self, sprint_id: int,):
+        return self.repository.get_all_tasks(sprint_id)
+    
+    def stop_sprint(self, project_id: int, sprint_id: int) -> Sprint | None:
+
+        sprint = self.repository.get_by_id_in_project(sprint_id, project_id)
+
+        if sprint is None:
+            raise HTTPException(status_code=404, detail="Sprint not found in this project")
+
+        if sprint.status != SprintStatusEnum.ACTIVE:
+            raise HTTPException(status_code=400, detail="Sprint no active")
+
+        return self.repository.stop(sprint_id)

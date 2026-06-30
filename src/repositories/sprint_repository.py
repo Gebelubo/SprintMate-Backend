@@ -138,3 +138,23 @@ class SprintRepository:
         self.db.refresh(sprint)
 
         return sprint
+    
+    def get_all_tasks(self, sprint_id: int):
+        return (
+            self.db.query(Task)
+            .filter(Task.sprint_id==sprint_id)
+            .all()
+        )
+    
+    def stop(self, sprint_id: int) -> Sprint | None:
+        sprint = self.get_by_id(sprint_id)
+
+        if sprint.status != SprintStatusEnum.ACTIVE:
+            return None
+
+        sprint.status = SprintStatusEnum.FINISHED
+
+        self.db.commit()
+        self.db.refresh(sprint)
+
+        return sprint
