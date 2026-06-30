@@ -280,3 +280,13 @@ def start_sprint(
 
     service = SprintService(db)
     return service.start_sprint(project_id, sprint_id)
+
+@router.post("/{project_id}/sprints/{sprint_id}/stop", status_code=200)
+def stop_sprint(
+    project_id: int,
+    sprint_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    service = SprintService(db)
+    return service.stop_sprint(project_id, sprint_id)

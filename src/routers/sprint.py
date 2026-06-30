@@ -30,7 +30,7 @@ def get_sprints(
     service = SprintService(db)
     return service.get_all_sprints()
 
-@router.get("/sprints/{sprint_id}")
+@router.get("/{sprint_id}")
 def get_sprint(
     sprint_id: int,
     db: Session = Depends(get_db)
@@ -38,7 +38,7 @@ def get_sprint(
     service = SprintService(db)
     return service.get_sprint(sprint_id)
 
-@router.patch("/sprints/{sprint_id}")
+@router.patch("/{sprint_id}")
 def update_sprint(
     sprint_id: int,
     data: SprintUpdate,
@@ -47,7 +47,7 @@ def update_sprint(
     service = SprintService(db)
     return service.update_sprint(sprint_id, data)
 
-@router.delete("/sprints/{sprint_id}")
+@router.delete("/{sprint_id}")
 def delete_sprint(
     sprint_id: int,
     db: Session = Depends(get_db)
@@ -55,7 +55,7 @@ def delete_sprint(
     service = SprintService(db)
     return service.delete_sprint(sprint_id)
 
-@router.get("/sprints/{sprint_id}")
+@router.get("/{sprint_id}")
 def get_sprint_by_id(
     sprint_id: int,
     db: Session = Depends(get_db)
@@ -63,7 +63,7 @@ def get_sprint_by_id(
     service = SprintService(db)
     return service.get_sprint_by_id(sprint_id)
 
-@router.post("/sprints/{sprint_id}/tasks/{task_id}")
+@router.post("/{sprint_id}/tasks/{task_id}")
 def add_task_to_sprint(
     sprint_id: int,
     task_id: int,
@@ -71,3 +71,11 @@ def add_task_to_sprint(
 ):
     service = SprintService(db)
     return service.add_task_to_sprint(sprint_id, task_id)
+
+@router.get("/{sprint_id}/tasks")
+def get_all_tasks(
+    sprint_id: int,
+    db: Session = Depends(get_db)
+):
+    service = SprintService(db)
+    return service.get_all_tasks(sprint_id)
