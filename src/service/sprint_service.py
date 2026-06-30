@@ -27,3 +27,16 @@ class SprintService:
 
     def delete_sprint(self, sprint_id: int) -> bool:
         return self.repository.delete(sprint_id)
+    
+    def get_sprint_by_id(
+        self,
+        sprint_id:int
+):
+        return self.repository.get_by_id(sprint_id)
+    
+    def add_task_to_sprint(
+        self,
+        sprint_id,
+        task_id
+    ):
+        return self.repository.add_task_to_sprint(sprint_id, task_id)
