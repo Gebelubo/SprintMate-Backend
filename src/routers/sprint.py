@@ -53,3 +53,20 @@ def delete_sprint(
 ):
     service = SprintService(db)
     return service.delete_sprint(sprint_id)
+
+@router.get("/sprints/{sprint_id}")
+def get_sprint_by_id(
+    sprint_id: int,
+    db: Session = Depends(get_db)
+):
+    service = SprintService(db)
+    return service.get_sprint_by_id(sprint_id)
+
+@router.post("/sprints/{sprint_id}/tasks/{task_id}")
+def add_task_to_sprint(
+    sprint_id: int,
+    task_id: int,
+    db: Session = Depends(get_db)
+):
+    service = SprintService(db)
+    return service.add_task_to_sprint(sprint_id, task_id)

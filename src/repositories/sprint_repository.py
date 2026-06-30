@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from src.entities.models import Sprint
+from src.entities.models import Sprint, Task
 from src.entities.schemas import SprintCreate, SprintUpdate
 
 
@@ -82,3 +82,21 @@ class SprintRepository:
         self.db.commit()
 
         return True
+    
+    def add_task_to_sprint(self, sprint_id: int, task_id:int) -> Task | None:
+        sprint = (self.db.query(Sprint).filter(Sprint.id==sprint_id).first())
+
+        if sprint is None:
+            return None
+
+        task = (self.db.query(Task).filter(Task.id==task_id).first())
+
+        if task is None:
+            return None
+
+        task.sprint_id = sprint_id
+
+        self.db.commit()
+        self.db.refresh(task)
+
+        return task
