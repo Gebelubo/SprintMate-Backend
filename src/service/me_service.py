@@ -1,4 +1,5 @@
 from src.entities.models import User
+from src.entities.schemas import ProjectResponse, ProjectWithRoleResponse
 
 class MeService:
 
@@ -8,7 +9,10 @@ class MeService:
         current_user: User 
     ):
         return [
-            association.project
+            ProjectWithRoleResponse(
+                **ProjectResponse.model_validate(association.project).model_dump(),
+                role=association.role
+            )
             for association in current_user.project_associations
         ]
 

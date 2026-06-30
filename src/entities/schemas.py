@@ -106,8 +106,11 @@ class TaskBase(BaseModel):
     points: Optional[int] = None
 
 
-class TaskCreate(TaskBase):
-    pass
+class TaskCreate(BaseModel):
+    title: str
+    type: TaskTypeEnum
+    priority: PriorityEnum
+    project_id: int
 
 
 class TaskUpdate(BaseModel):
@@ -139,8 +142,6 @@ class TaskResponse(TaskBase):
         "from_attributes": True
     }
 
-from pydantic import BaseModel
-
 
 class NotificationConfigResponse(BaseModel):
     id: int
@@ -162,7 +163,7 @@ class NotificationConfigUpdate(BaseModel):
 
 # --------------- PROJECT -------------------
 
-from src.entities.enums import RoleEnum
+from src.entities.enums import AttachTypeEnum, CommentTypeEnum, RoleEnum
 
 class ProjectCreate(BaseModel):
     name: str
@@ -199,7 +200,6 @@ class ProjectUserResponse(BaseModel):
     role: RoleEnum
 
     model_config = {"from_attributes": True}
-
 class SprintCreate(BaseModel):
     name: str
     project_id: int
@@ -229,6 +229,80 @@ class SprintResponse(BaseModel):
     goal: str | None
     points: int | None
 
+class ProjectWithRoleResponse(ProjectResponse):
+    role: RoleEnum
+
+class CommentCreate(BaseModel):
+    content: str
+    type: Optional[CommentTypeEnum] = None
+
+
+class CommentUpdate(BaseModel):
+    content: Optional[str] = None
+    type: Optional[CommentTypeEnum] = None
+
+
+class CommentResponse(BaseModel):
+    id: int
+
+    task_id: int
+    user_id: int
+
+    content: str
+    type: Optional[CommentTypeEnum]
+
+    created_at: datetime
+    updated_at: datetime
+
     model_config = {
         "from_attributes": True
     }
+
+class AttachmentCreate(BaseModel):
+    url: str
+    type: AttachTypeEnum
+
+
+class AttachmentResponse(BaseModel):
+    id: int
+
+    task_id: int
+
+    url: str
+    type: AttachTypeEnum
+
+    model_config = {
+        "from_attributes": True
+    }
+
+# ----------- BOARD COLUMN ----------------
+
+class BoardColumnCreate(BaseModel):
+    name: str
+    order: int = 0
+
+class BoardColumnUpdate(BaseModel):
+    name: Optional[str] = None
+    order: Optional[int] = None
+
+class BoardColumnResponse(BaseModel):
+    id: int
+    name: Optional[str]
+    order: Optional[int]
+    project_id: Optional[int]
+
+    model_config = {"from_attributes": True}
+
+class TaskMoveRequest(BaseModel):
+    column_id: int
+
+class ProjectUserResponseWithUser(BaseModel):
+    id: int
+    name: str
+    user_name: str
+    project_id: int
+    role: RoleEnum
+
+
+class ProjectInvite(BaseModel):
+    email: str

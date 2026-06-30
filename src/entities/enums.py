@@ -5,9 +5,9 @@ import enum
 # =========================================================
 
 class RoleEnum(enum.Enum):
-    OWNER = "OWNER"
-    ADMIN = "ADMIN"
-    MEMBER = "MEMBER"
+    OWNER = "owner"
+    ADMIN = "admin"
+    DEV = "dev"
 
 
 class SprintStatusEnum(enum.Enum):

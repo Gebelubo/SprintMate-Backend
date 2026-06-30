@@ -169,7 +169,11 @@ class ProjectUser(Base):
     )
 
     role = Column(
-        Enum(RoleEnum, name="role_t"),
+        Enum(
+            RoleEnum,
+            values_callable=lambda obj: [e.value for e in obj],
+            name="role_t"
+        ),
         nullable=False
     )
 
@@ -714,3 +718,4 @@ if __name__ == "__main__":
     Base.metadata.create_all(engine)
 
     print("Banco criado com sucesso.")
+

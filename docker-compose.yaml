@@ -11,12 +11,13 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 123456
       POSTGRES_DB: sprintmate_db
+      
 
     ports:
       - "5432:5432"
 
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - sprint_mate_postgres_data:/var/lib/postgresql/data
 
   app:
     build: .
@@ -35,7 +36,7 @@ services:
       ALGORITHM: HS256
       CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
       MAIL_USERNAME: sprintmatesystem@gmail.com
-      MAIL_PASSWORD: lzba kxey tdvo ixds
+      MAIL_PASSWORD: wbks yxhz symr nexk
       EMAIL_USERNAME: sprintmatesystem@gmail.com
 
       DB_HOST: postgres
@@ -58,4 +59,4 @@ services:
       - postgres
 
 volumes:
-  postgres_data:
+  sprint_mate_postgres_data:

@@ -6,8 +6,12 @@ from src.entities.models import User
 from src.entities.schemas import (
     ProjectCreate, ProjectUpdate, ProjectResponse,
     ProjectUserAdd, ProjectUserUpdateRole, ProjectUserResponse,
-)
+    BoardColumnCreate, BoardColumnUpdate, BoardColumnResponse,
+    TaskResponse, ProjectInvite, ProjectUserResponseWithUser
+) 
+from src.entities.enums import RoleEnum
 from src.service.project_service import ProjectService
+from src.service.board_service import BoardService
 from src.utils.dependencies import get_current_user
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
@@ -75,7 +79,7 @@ def delete_project(
 
 # --- Project members ---
 
-@router.get("/{project_id}/users", response_model=list[ProjectUserResponse])
+@router.get("/{project_id}/users", response_model=list[ProjectUserResponseWithUser])
 def get_project_users(
     project_id: int,
     current_user: User = Depends(get_current_user),
@@ -121,3 +125,125 @@ def remove_user(
     removed = service.remove_user_from_project(project_id, user_id)
     if not removed:
         raise HTTPException(status_code=404, detail="User not found in project")
+
+# --- Board columns ---
+
+def get_board_service(db: Session = Depends(get_db)) -> BoardService:
+    return BoardService(db)
+
+
+@router.get("/{project_id}/columns", response_model=list[BoardColumnResponse])
+def get_columns(
+    project_id: int,
+    current_user: User = Depends(get_current_user),
+    service: BoardService = Depends(get_board_service),
+):
+    return service.get_project_columns(project_id)
+
+
+@router.post("/{project_id}/columns", response_model=BoardColumnResponse)
+def create_column(
+    project_id: int,
+    data: BoardColumnCreate,
+    current_user: User = Depends(get_current_user),
+    service: BoardService = Depends(get_board_service),
+):
+    column = service.create_column(project_id, data)
+    if not column:
+        raise HTTPException(status_code=400, detail="Could not create column")
+    return column
+
+
+@router.put("/{project_id}/columns/{column_id}", response_model=BoardColumnResponse)
+def update_column(
+    project_id: int,
+    column_id: int,
+    data: BoardColumnUpdate,
+    current_user: User = Depends(get_current_user),
+    service: BoardService = Depends(get_board_service),
+):
+    column = service.update_column(column_id, data)
+    if not column:
+        raise HTTPException(status_code=404, detail="Column not found")
+    return column
+
+
+@router.delete("/{project_id}/columns/{column_id}", status_code=204)
+def delete_column(
+    project_id: int,
+    column_id: int,
+    current_user: User = Depends(get_current_user),
+    service: BoardService = Depends(get_board_service),
+):
+    deleted = service.delete_column(column_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Column not found")
+
+
+@router.get("/{project_id}/columns/{column_id}", response_model=BoardColumnResponse)
+def get_column_by_id(
+    project_id: int,
+    column_id: int,
+    current_user: User = Depends(get_current_user),
+    service: BoardService = Depends(get_board_service),
+):
+    column = service.get_column(column_id)
+    if not column:
+        raise HTTPException(status_code=404, detail="Column not found")
+    return column
+
+
+@router.get("/{project_id}/columns/{column_id}/tasks", response_model=list[TaskResponse])
+def get_column_tasks(
+    project_id: int,
+    column_id: int,
+    current_user: User = Depends(get_current_user),
+    service: BoardService = Depends(get_board_service),
+):
+    return service.get_column_tasks(column_id)
+
+@router.post("/{project_id}/join/{role_str}")
+def join_project(
+    project_id: int,
+    role_str: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    service = ProjectService(db)
+
+    # 1. Valida se o role é válido
+    try:
+        role = RoleEnum(role_str)
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"'{role_str}' is not a valid role.")
+
+    # 2. Verifica se o projeto existe
+    project = service.get_project(project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # 3. Tenta adicionar o usuário ao projeto
+    try:
+        assoc = service.add_user_to_project(
+            project_id,
+            ProjectUserAdd(user_id=current_user.id, role=role)
+        )
+        if not assoc:
+            # Se o usuário já for membro, o repositório retorna None
+            raise HTTPException(status_code=409, detail="User is already a member of this project.")
+    except HTTPException as e:
+        raise e # Re-lança exceções HTTP já tratadas
+    except Exception:
+        raise HTTPException(status_code=500, detail="Could not add user to project due to an internal error.")
+
+    return {"message": "Project joined successfully"}
+@router.post("/{project_id}/invite", status_code=200)
+async def invite_user(
+    project_id: int,
+    data: ProjectInvite,
+    current_user: User = Depends(get_current_user),  # ← adicionar
+    db: Session = Depends(get_db)
+):
+    service = ProjectService(db)
+    response = await service.invite_user(project_id, data.email)
+    return response
