@@ -6,6 +6,7 @@ from src.entities.schemas import (
     SprintCreate,
     SprintUpdate,
     SprintResponse,
+    SprintProjectCreate
 )
 from src.service.sprint_service import SprintService
 
@@ -22,7 +23,7 @@ def create_sprint(
     service = SprintService(db)
     return service.create_sprint(data)
 
-@router.get("/sprints")
+@router.get("/")
 def get_sprints(
     db: Session = Depends(get_db)
 ):

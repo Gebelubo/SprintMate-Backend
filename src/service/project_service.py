@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from src.entities.models import Project, ProjectUser
 from src.entities.schemas import ProjectCreate, ProjectUpdate, ProjectUserAdd, ProjectUserUpdateRole
 from src.repositories.project_repository import ProjectRepository
-from src.entities.schemas import ProjectUserResponseWithUser
+from src.entities.schemas import ProjectUserResponseWithUser, SprintProjectCreate
 from src.entities.enums import RoleEnum
 
 from src.utils.send_email import send_project_invite_email
@@ -76,3 +76,4 @@ class ProjectService:
         return {
             "message": "Invitation sent successfully"
         }
+    
