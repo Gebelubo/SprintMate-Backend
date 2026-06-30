@@ -2,6 +2,9 @@ from pydantic import BaseModel, field_validator, EmailStr
 from typing import Optional
 from datetime import datetime
 import re
+from src.entities.models import SprintStatusEnum
+
+from src.entities.models import TaskTypeEnum, PriorityEnum
 
 
 # ------------- USER ----------------
@@ -84,13 +87,6 @@ class ResetPasswordRequest(BaseModel):
     new_password: str
 
 # ------------ TAKSKS -----------------
-
-from datetime import datetime
-from pydantic import BaseModel
-from typing import Optional
-
-from src.entities.models import TaskTypeEnum, PriorityEnum
-
 
 class TaskBase(BaseModel):
     title: str
@@ -204,6 +200,34 @@ class ProjectUserResponse(BaseModel):
     role: RoleEnum
 
     model_config = {"from_attributes": True}
+class SprintCreate(BaseModel):
+    name: str
+    project_id: int
+    start_date: datetime
+    end_date: datetime
+    status: SprintStatusEnum
+    goal: str | None = None
+    points: int | None = None
+
+
+class SprintUpdate(BaseModel):
+    name: str | None = None
+    project_id: int | None = None
+    start_date: datetime | None = None
+    end_date: datetime | None = None
+    status: SprintStatusEnum | None = None
+    goal: str | None = None
+    points: int | None = None
+
+class SprintResponse(BaseModel):
+    id: int
+    name: str
+    project_id: int
+    start_date: datetime
+    end_date: datetime
+    status: SprintStatusEnum
+    goal: str | None
+    points: int | None
 
 class ProjectWithRoleResponse(ProjectResponse):
     role: RoleEnum

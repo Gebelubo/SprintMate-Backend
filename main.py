@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.db.db import get_db_instance
-from src.routers import user, auth, task, me, project
+from src.routers import user, auth, task, me, project, sprint
 
 app = FastAPI()
 
@@ -18,6 +18,7 @@ app.include_router(auth.router)
 app.include_router(task.router)
 app.include_router(me.router)
 app.include_router(project.router)
+app.include_router(sprint.router)
 app.include_router(task.comment_router)
 app.include_router(task.attachment_router)
 
