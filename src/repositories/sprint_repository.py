@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
 
 from src.entities.models import Sprint, Task
-from src.entities.schemas import SprintCreate, SprintUpdate
+from src.entities.enums import SprintStatusEnum
+from src.entities.schemas import SprintCreate, SprintUpdate, SprintProjectCreate
 
 
 class SprintRepository:
@@ -14,9 +15,26 @@ class SprintRepository:
             project_id=data.project_id,
             start_date=data.start_date,
             end_date=data.end_date,
-            status=data.status,
-            goal=data.goal,
-            points=data.points,
+            status=SprintStatusEnum.NOSTATUS,
+            goal=None,
+            points=0,
+        )
+
+        self.db.add(sprint)
+        self.db.commit()
+        self.db.refresh(sprint)
+
+        return sprint
+    
+    def create_project(self, data: SprintProjectCreate, project_id:int) -> Sprint:
+        sprint = Sprint(
+            name=data.name,
+            project_id=project_id,
+            start_date=data.start_date,
+            end_date=data.end_date,
+            status=SprintStatusEnum.NOSTATUS,
+            goal=None,
+            points=None,
         )
 
         self.db.add(sprint)
@@ -100,3 +118,6 @@ class SprintRepository:
         self.db.refresh(task)
 
         return task
+    
+    def get_project_sprints(self, project_id: int) -> list[Sprint]:
+        return self.db.query(Sprint).filter(Sprint.project_id==project_id).all()

@@ -11,8 +11,10 @@ from src.entities.schemas import (
 ) 
 from src.entities.enums import RoleEnum
 from src.service.project_service import ProjectService
+from src.service.sprint_service import SprintService
 from src.service.board_service import BoardService
 from src.utils.dependencies import get_current_user
+from src.entities.schemas import SprintProjectCreate
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
@@ -247,3 +249,20 @@ async def invite_user(
     service = ProjectService(db)
     response = await service.invite_user(project_id, data.email)
     return response
+
+@router.post("/{project_id}/sprint", status_code=200)
+def create_sprint_in_project(
+    project_id: int,
+    data: SprintProjectCreate,
+    db: Session = Depends(get_db)
+):
+   service = SprintService(db) 
+   return service.create_sprint_in_project(data, project_id)
+
+@router.get("/{project_id}/sprint", status_code=200)
+def get_project_sprints(
+    project_id: int,
+    db: Session = Depends(get_db)
+):
+    service = SprintService(db) 
+    return service.get_project_sprints(project_id)

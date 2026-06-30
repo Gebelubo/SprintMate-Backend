@@ -14,6 +14,7 @@ class SprintStatusEnum(enum.Enum):
     PLANNED = "PLANNED"
     ACTIVE = "ACTIVE"
     FINISHED = "FINISHED"
+    NOSTATUS = "NOSTATUS"
 
 
 class TaskTypeEnum(enum.Enum):

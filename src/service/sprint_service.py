@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from src.entities.models import Sprint
-from src.entities.schemas import SprintCreate, SprintUpdate
+from src.entities.schemas import SprintCreate, SprintUpdate, SprintProjectCreate
 from src.repositories.sprint_repository import SprintRepository
 
 
@@ -40,3 +40,16 @@ class SprintService:
         task_id
     ):
         return self.repository.add_task_to_sprint(sprint_id, task_id)
+    
+    def create_sprint_in_project(
+        self,
+        data: SprintProjectCreate,
+        project_id: int,
+    ):
+        return self.repository.create_project(data, project_id)
+    
+    def get_project_sprints(
+        self,
+        project_id: int,
+    ):
+        return self.repository.get_project_sprints(project_id)
