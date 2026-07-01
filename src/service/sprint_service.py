@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from src.entities.models import Sprint
+from src.entities.models import Sprint, Task
 from src.entities.enums import SprintStatusEnum
 from src.entities.schemas import SprintCreate, SprintUpdate, SprintProjectCreate
 from src.repositories.sprint_repository import SprintRepository
@@ -88,3 +88,6 @@ class SprintService:
             raise HTTPException(status_code=400, detail="Sprint no active")
 
         return self.repository.stop(sprint_id)
+    
+    def remove_task_from_sprint(self, sprint_id, task_id)-> Task | None:
+        return self.repository.remove_task_from_sprint(sprint_id, task_id)

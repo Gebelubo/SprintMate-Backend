@@ -158,3 +158,17 @@ class SprintRepository:
         self.db.refresh(sprint)
 
         return sprint
+    
+    def remove_task_from_sprint(self, sprint_id, task_id)-> Task | None:
+
+        task = self.db.query(Task).filter(Task.sprint_id == sprint_id, Task.id==task_id).first()
+
+        if task is None:
+            return None
+    
+        task.sprint_id = None
+
+        self.db.commit()
+        self.db.refresh(task)
+
+        return task
