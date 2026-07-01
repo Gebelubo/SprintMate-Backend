@@ -15,7 +15,8 @@ from src.entities.schemas import (
     CommentUpdate,
     TaskCreate,
     TaskUpdate,
-    TaskResponse
+    TaskResponse,
+    UserTaskResponse
 )
 from src.service.task_service import TaskService
 from src.utils.dependencies import get_current_user
@@ -315,3 +316,17 @@ def move_task(
     if not task:
         raise HTTPException(status_code=404, detail="Task or column not found")
     return task
+
+@router.post("/{task_id}/users/{user_id}/assign", response_model=UserTaskResponse)
+def assign_user_to_task(
+    item_id: int,
+    user_id: int,
+    service: TaskService = Depends(get_task_service)
+):
+    try:
+        user_task = service.assign_user_to_task(item_id, user_id)
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail="User is already assigned to this task.")
+    if not user_task:
+        raise HTTPException(status_code=404, detail="Task or user not found")
+    return user_task

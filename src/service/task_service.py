@@ -1,13 +1,15 @@
 from sqlalchemy.orm import Session
 
-from src.entities.models import Task
+from src.entities.models import Task, UserTask
 from src.entities.schemas import TaskCreate, TaskUpdate
 from src.repositories.task_repository import TaskRepository
+from src.repositories.user_task_repository import UserTaskRepository
 
 
 class TaskService:
     def __init__(self, db: Session):
         self.repository = TaskRepository(db)
+        self.user_task_repository = UserTaskRepository(db)
 
     def create_task(
         self,
@@ -58,3 +60,11 @@ class TaskService:
         task: Task
     ) -> Task:
         return self.repository.save(task)
+    
+    def assign_user_to_task(
+        self,
+        item_id: int,
+        user_id: int
+    ) -> UserTask | None:         
+        return self.user_task_repository.assign_user_to_task(item_id, user_id)
+    
