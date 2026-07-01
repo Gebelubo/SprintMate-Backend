@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator, EmailStr
+from pydantic import BaseModel, ConfigDict, field_validator, EmailStr
 from typing import Optional
 from datetime import datetime, date
 import re
@@ -313,3 +313,14 @@ class ProjectUserResponseWithUser(BaseModel):
 
 class ProjectInvite(BaseModel):
     email: str
+
+class UserTaskCreate(BaseModel):
+    user_id: int
+    task_id: int
+
+class UserTaskResponse(BaseModel):
+    id: int
+    user_id: int
+    item_id: int 
+
+    model_config = ConfigDict(from_attributes=True)

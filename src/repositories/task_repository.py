@@ -3,8 +3,10 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
-from src.entities.models import Task
+from src.entities.models import Task, User
 from src.entities.schemas import TaskCreate, TaskUpdate
+from src.repositories.user_repository import UserRepository
+
 
 
 class TaskRepository:
