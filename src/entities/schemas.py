@@ -324,3 +324,15 @@ class UserTaskResponse(BaseModel):
     item_id: int 
 
     model_config = ConfigDict(from_attributes=True)
+
+# ----------- PLANNING POKER SESSION ----------------
+
+from src.entities.enums import PlanningPokerStatusEnum
+
+class PlanningPokerSessionResponse(BaseModel):
+    id: int
+    project_id: int
+    created_by: int
+    status: PlanningPokerStatusEnum
+
+    model_config = ConfigDict(from_attributes=True)
