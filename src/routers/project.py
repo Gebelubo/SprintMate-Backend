@@ -12,6 +12,7 @@ from src.entities.schemas import (
 from src.entities.enums import RoleEnum
 from src.service.project_service import ProjectService
 from src.service.sprint_service import SprintService
+from src.service.task_service import TaskService
 from src.service.board_service import BoardService
 from src.utils.dependencies import get_current_user
 from src.entities.schemas import SprintProjectCreate
@@ -290,3 +291,11 @@ def stop_sprint(
 ):
     service = SprintService(db)
     return service.stop_sprint(project_id, sprint_id)
+
+@router.get("/{project_id}/tasks/backlog", status_code=200)
+def get_project_backlog(
+    project_id: int,
+    db: Session = Depends(get_db)
+):
+    service = TaskService(db) 
+    return service.get_project_backlog(project_id)

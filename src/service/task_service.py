@@ -68,3 +68,10 @@ class TaskService:
     ) -> UserTask | None:         
         return self.user_task_repository.assign_user_to_task(item_id, user_id)
     
+    def get_project_backlog(
+        self,
+        project_id: int
+    ) -> list[Task]:
+        tasks = self.repository.get_by_project(project_id)
+        backlog_tasks = [task for task in tasks if task.sprint_id is None]
+        return backlog_tasks
