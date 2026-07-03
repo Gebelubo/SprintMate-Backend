@@ -65,6 +65,46 @@ def create_session(
     return service.create_session(project_id, current_user.id)
 
 
+from pydantic import BaseModel
+
+class PlanningPokerInviteSchema(BaseModel):
+    emails: list[str]
+
+
+@router.post("/invite", status_code=200)
+async def invite_members_to_poker(
+    project_id: int,
+    data: PlanningPokerInviteSchema,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    project_service: ProjectService = Depends(get_project_service)
+):
+    if not project_service.is_project_member(project_id, current_user.id):
+        raise HTTPException(
+            status_code=403,
+            detail="You must be a member of this project to invite members to planning poker",
+        )
+
+    project = project_service.get_project(project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    from src.utils.send_email import send_planning_poker_invite_email
+
+    for email in data.emails:
+        try:
+            await send_planning_poker_invite_email(
+                email=email,
+                project_id=project_id,
+                project_name=project.name,
+                subject=f"Convite para o Planning Poker: {project.name}"
+            )
+        except Exception as e:
+            print(f"Failed to send email to {email}: {e}")
+
+    return {"message": "Invitations sent successfully"}
+
+
 @router.get("/", response_model=list[PlanningPokerSessionResponse])
 def list_sessions(
     project_id: int,

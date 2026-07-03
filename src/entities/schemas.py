@@ -309,6 +309,7 @@ class ProjectUserResponseWithUser(BaseModel):
     id: int
     user_id: int
     user_name: str
+    email: str
     project_id: int
     role: RoleEnum
 
