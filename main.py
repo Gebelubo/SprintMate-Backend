@@ -20,6 +20,7 @@ app.include_router(me.router)
 app.include_router(project.router)
 app.include_router(sprint.router)
 app.include_router(planning_poker.router)
+app.include_router(planning_poker.cards_router)
 app.include_router(task.comment_router)
 app.include_router(task.attachment_router)
 
