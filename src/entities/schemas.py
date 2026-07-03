@@ -123,6 +123,7 @@ class TaskUpdate(BaseModel):
     column_id: Optional[int] = None
     project_id: Optional[int] = None
     sprint_id: Optional[int] = None
+    assignee_id: Optional[int] = None
 
     parent_id: Optional[int] = None
     epic: Optional[int] = None

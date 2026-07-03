@@ -48,4 +48,7 @@ class UserTaskRepository:
 
         user_task = self.create(UserTaskCreate(user_id=user_id, task_id=item_id))
 
+        task.responsible_user_id = user_id
+        self.db.commit()
+
         return user_task

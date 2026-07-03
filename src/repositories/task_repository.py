@@ -83,6 +83,9 @@ class TaskRepository:
 
         update_data = data.model_dump(exclude_unset=True)
 
+        if "assignee_id" in update_data:
+            update_data["responsible_user_id"] = update_data.pop("assignee_id")
+
         for field, value in update_data.items():
             setattr(task, field, value)
 
