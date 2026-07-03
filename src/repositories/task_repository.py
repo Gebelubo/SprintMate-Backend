@@ -24,6 +24,7 @@ class TaskRepository:
             type=data.type,
             priority=data.priority,
             project_id=data.project_id,
+            responsible_user_id=data.assignee_id,
             created_by=created_by
         )
 

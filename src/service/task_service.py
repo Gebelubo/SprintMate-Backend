@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from src.entities.models import Task, UserTask
+from src.entities.models import Task, User, UserTask
 from src.entities.schemas import TaskCreate, TaskUpdate
 from src.repositories.task_repository import TaskRepository
 from src.repositories.user_task_repository import UserTaskRepository
@@ -75,3 +75,9 @@ class TaskService:
         tasks = self.repository.get_by_project(project_id)
         backlog_tasks = [task for task in tasks if task.sprint_id is None]
         return backlog_tasks
+    
+    def get_assigned_user(self, task_id: int) -> User | None:
+        task = self.repository.get_by_id(task_id)
+        if not task:
+            return None
+        return task.responsible_user

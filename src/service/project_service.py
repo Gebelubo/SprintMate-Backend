@@ -44,6 +44,7 @@ class ProjectService:
             ProjectUserResponseWithUser(
                 id=user.id,
                 user_name=user.user.name,
+                user_id=user.user_id,
                 project_id=user.project_id,
                 role=user.role
             )

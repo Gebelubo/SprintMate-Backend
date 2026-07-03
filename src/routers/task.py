@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 
 from src.service.board_service import BoardService
-from src.entities.schemas import TaskMoveRequest
+from src.entities.schemas import TaskMoveRequest, UserResponse
 from src.service.attachment_service import AttachmentService
 from src.service.comment_service import CommentService
 from src.db.deps import get_db
@@ -330,3 +330,13 @@ def assign_user_to_task(
     if not user_task:
         raise HTTPException(status_code=404, detail="Task or user not found")
     return user_task
+
+@router.get("/{task_id}/assigned-user", response_model=UserResponse)
+def get_assigned_user(
+    task_id: int,
+    service: TaskService = Depends(get_task_service)
+):
+    user = service.get_assigned_user(task_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Task not found or no user assigned")
+    return user

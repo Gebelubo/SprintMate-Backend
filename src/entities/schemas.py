@@ -111,7 +111,7 @@ class TaskCreate(BaseModel):
     type: TaskTypeEnum
     priority: PriorityEnum
     project_id: int
-
+    assignee_id: Optional[int] = None
 
 class TaskUpdate(BaseModel):
     title: Optional[str] = None
@@ -306,6 +306,7 @@ class TaskMoveRequest(BaseModel):
 
 class ProjectUserResponseWithUser(BaseModel):
     id: int
+    user_id: int
     user_name: str
     project_id: int
     role: RoleEnum
