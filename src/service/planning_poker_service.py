@@ -1,6 +1,7 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from src.entities.enums import PlanningPokerStatusEnum
 from src.entities.models import PlanningPokerSession
 from src.repositories.planning_poker_repository import PlanningPokerRepository
 
@@ -35,5 +36,16 @@ class PlanningPokerService:
 
     def close_session(self, project_id: int, session_id: int) -> PlanningPokerSession:
         session = self.get_session_in_project(project_id, session_id)
+
+        return self.repository.close(session.id)
+
+    def reveal_votes(self, project_id: int, session_id: int) -> PlanningPokerSession:
+        session = self.get_session_in_project(project_id, session_id)
+
+        if session.status == PlanningPokerStatusEnum.CLOSED:
+            raise HTTPException(
+                status_code=409,
+                detail="Votes for this planning poker session have already been revealed",
+            )
 
         return self.repository.close(session.id)

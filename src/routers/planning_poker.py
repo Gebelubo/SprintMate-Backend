@@ -1,16 +1,18 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from src.db.deps import get_db
 from src.entities.models import User
 from src.entities.schemas import (
     PlanningPokerCardsResponse,
+    PlanningPokerResultResponse,
     PlanningPokerSessionResponse,
     PlanningPokerVoteCreate,
     PlanningPokerVoteResponse,
 )
 from src.service.planning_poker_service import PlanningPokerService
 from src.service.planning_poker_vote_service import PlanningPokerVoteService
+from src.service.project_service import ProjectService
 from src.utils.dependencies import get_current_user
 
 router = APIRouter(
@@ -32,6 +34,10 @@ def get_planning_poker_vote_service(
     db: Session = Depends(get_db),
 ) -> PlanningPokerVoteService:
     return PlanningPokerVoteService(db)
+
+
+def get_project_service(db: Session = Depends(get_db)) -> ProjectService:
+    return ProjectService(db)
 
 
 @cards_router.get("/cards", response_model=PlanningPokerCardsResponse)
@@ -80,6 +86,23 @@ def close_session(
     return service.close_session(project_id, session_id)
 
 
+@router.post("/{session_id}/reveal", response_model=PlanningPokerSessionResponse)
+def reveal_votes(
+    project_id: int,
+    session_id: int,
+    current_user: User = Depends(get_current_user),
+    service: PlanningPokerService = Depends(get_planning_poker_service),
+    project_service: ProjectService = Depends(get_project_service),
+):
+    if not project_service.is_project_member(project_id, current_user.id):
+        raise HTTPException(
+            status_code=403,
+            detail="You must be a member of this project to reveal votes",
+        )
+
+    return service.reveal_votes(project_id, session_id)
+
+
 @router.post("/{session_id}/votes", response_model=PlanningPokerVoteResponse)
 def create_vote(
     project_id: int,
@@ -99,3 +122,17 @@ def list_votes(
     service: PlanningPokerVoteService = Depends(get_planning_poker_vote_service),
 ):
     return service.get_session_votes(project_id, session_id, current_user.id)
+
+
+@router.get(
+    "/{session_id}/items/{item_id}/results",
+    response_model=PlanningPokerResultResponse,
+)
+def get_item_results(
+    project_id: int,
+    session_id: int,
+    item_id: int,
+    current_user: User = Depends(get_current_user),
+    service: PlanningPokerVoteService = Depends(get_planning_poker_vote_service),
+):
+    return service.get_item_results(project_id, session_id, item_id)

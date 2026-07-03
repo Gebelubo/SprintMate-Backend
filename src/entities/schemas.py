@@ -373,3 +373,11 @@ class PlanningPokerVoteResponse(BaseModel):
 
 class PlanningPokerCardsResponse(BaseModel):
     cards: list[str]
+
+
+class PlanningPokerResultResponse(BaseModel):
+    session_id: int
+    item_id: int
+    votes: list[PlanningPokerVoteResponse]
+    average: Optional[float]
+    final_estimate: Optional[str]

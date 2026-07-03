@@ -3,12 +3,21 @@ from sqlalchemy.orm import Session
 
 from src.entities.enums import PlanningPokerStatusEnum
 from src.entities.models import PlanningPokerVote
-from src.entities.schemas import PLANNING_POKER_CARDS, PlanningPokerVoteCreate
+from src.entities.schemas import (
+    PLANNING_POKER_CARDS,
+    PlanningPokerResultResponse,
+    PlanningPokerVoteCreate,
+)
 from src.repositories.planning_poker_repository import PlanningPokerRepository
 from src.repositories.planning_poker_vote_repository import (
     PlanningPokerVoteRepository,
 )
 from src.repositories.task_repository import TaskRepository
+
+_NUMERIC_CARDS = sorted(
+    (card for card in PLANNING_POKER_CARDS if card.isdigit()),
+    key=float,
+)
 
 
 class PlanningPokerVoteService:
@@ -85,6 +94,72 @@ class PlanningPokerVoteService:
 
         return votes
 
+    def get_item_results(
+        self, project_id: int, session_id: int, item_id: int
+    ) -> PlanningPokerResultResponse:
+        session = self.session_repository.get_by_id_in_project(
+            session_id, project_id
+        )
+
+        if session is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Planning poker session not found in this project",
+            )
+
+        if session.status != PlanningPokerStatusEnum.CLOSED:
+            raise HTTPException(
+                status_code=409,
+                detail="Votes have not been revealed yet for this session",
+            )
+
+        votes = self.repository.get_by_session_and_item(session_id, item_id)
+
+        if not votes:
+            raise HTTPException(
+                status_code=404,
+                detail="No votes found for this task in this session",
+            )
+
+        average = self._calculate_average(votes)
+        final_estimate = self._calculate_final_estimate(average)
+
+        return PlanningPokerResultResponse(
+            session_id=session_id,
+            item_id=item_id,
+            votes=votes,
+            average=average,
+            final_estimate=final_estimate,
+        )
+
+    @staticmethod
+    def _calculate_average(votes: list[PlanningPokerVote]) -> float | None:
+        numeric_values = []
+
+        for vote in votes:
+            if vote.vote_value is None:
+                continue
+            try:
+                numeric_values.append(float(vote.vote_value))
+            except ValueError:
+                continue
+
+        if not numeric_values:
+            return None
+
+        return round(sum(numeric_values) / len(numeric_values), 2)
+
+    @staticmethod
+    def _calculate_final_estimate(average: float | None) -> str | None:
+        if average is None:
+            return None
+
+        for card in _NUMERIC_CARDS:
+            if float(card) >= average:
+                return card
+
+        return _NUMERIC_CARDS[-1] if _NUMERIC_CARDS else None
+
     @staticmethod
     def _hide_votes(
         votes: list[PlanningPokerVote], current_user_id: int
@@ -108,3 +183,4 @@ class PlanningPokerVoteService:
             )
 
         return hidden_votes
+    
