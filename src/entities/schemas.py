@@ -338,3 +338,38 @@ class PlanningPokerSessionResponse(BaseModel):
     status: PlanningPokerStatusEnum
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ----------- PLANNING POKER VOTE ----------------
+
+PLANNING_POKER_CARDS: list[str] = [
+    "0", "1", "2", "3", "5", "8", "13", "21", "34", "55", "89", "?", "BREAK",
+]
+
+
+class PlanningPokerVoteCreate(BaseModel):
+    item_id: int
+    vote_value: str
+
+    @field_validator("vote_value")
+    @classmethod
+    def vote_value_must_be_valid_card(cls, v):
+        if v not in PLANNING_POKER_CARDS:
+            raise ValueError(
+                f"Invalid vote_value. Allowed cards: {PLANNING_POKER_CARDS}"
+            )
+        return v
+
+
+class PlanningPokerVoteResponse(BaseModel):
+    id: int
+    session_id: int
+    user_id: int
+    item_id: int
+    vote_value: Optional[str]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PlanningPokerCardsResponse(BaseModel):
+    cards: list[str]
