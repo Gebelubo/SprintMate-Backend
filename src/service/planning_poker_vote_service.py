@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from src.entities.enums import PlanningPokerStatusEnum
-from src.entities.models import PlanningPokerVote
+from src.entities.models import PlanningPokerVote, Task
 from src.entities.schemas import (
     PLANNING_POKER_CARDS,
     PlanningPokerResultResponse,
@@ -131,6 +131,30 @@ class PlanningPokerVoteService:
             average=average,
             final_estimate=final_estimate,
         )
+
+    def apply_final_estimate(
+        self, project_id: int, session_id: int, item_id: int
+    ) -> Task:
+    
+        result = self.get_item_results(project_id, session_id, item_id)
+
+        if result.final_estimate is None:
+            raise HTTPException(
+                status_code=409,
+                detail="There is no numeric estimate to apply for this task",
+            )
+
+        task = self.task_repository.get_by_id(item_id)
+
+        if task is None or task.project_id != project_id:
+            raise HTTPException(
+                status_code=404,
+                detail="Task not found in this project",
+            )
+
+        task.points = int(float(result.final_estimate))
+
+        return self.task_repository.save(task)
 
     @staticmethod
     def _calculate_average(votes: list[PlanningPokerVote]) -> float | None:

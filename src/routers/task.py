@@ -5,6 +5,7 @@ from src.service.board_service import BoardService
 from src.entities.schemas import TaskMoveRequest, UserResponse
 from src.service.attachment_service import AttachmentService
 from src.service.comment_service import CommentService
+from src.service.project_service import ProjectService
 from src.db.deps import get_db
 from src.entities.schemas import (
     AttachmentCreate,
@@ -42,6 +43,11 @@ def get_task_service(
     db: Session = Depends(get_db)
 ) -> TaskService:
     return TaskService(db)
+
+def get_project_service(
+    db: Session = Depends(get_db)
+) -> ProjectService:
+    return ProjectService(db)
 
 def get_comment_service(
     db: Session = Depends(get_db)
@@ -97,9 +103,11 @@ def get_task(
 def update_task(
     task_id: int,
     data: TaskUpdate,
-    service: TaskService = Depends(get_task_service)
+    current_user: User = Depends(get_current_user),
+    service: TaskService = Depends(get_task_service),
+    project_service: ProjectService = Depends(get_project_service),
 ):
-    task = service.update_task(task_id, data)
+    task = service.get_task(task_id)
 
     if not task:
         raise HTTPException(
@@ -107,7 +115,22 @@ def update_task(
             detail="Task not found"
         )
 
-    return task
+    if data.points is not None or data.estimate is not None:
+        if not project_service.is_project_leader(task.project_id, current_user.id):
+            raise HTTPException(
+                status_code=403,
+                detail="Only the project leader can set the task estimate/points",
+            )
+
+    updated_task = service.update_task(task_id, data)
+
+    if not updated_task:
+        raise HTTPException(
+            status_code=404,
+            detail="Task not found"
+        )
+
+    return updated_task
 
 
 @router.delete(

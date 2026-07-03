@@ -33,6 +33,15 @@ class ProjectService:
     def is_project_member(self, project_id: int, user_id: int) -> bool:
         return self.repository.get_project_user(project_id, user_id) is not None
 
+    def get_user_role(self, project_id: int, user_id: int) -> RoleEnum | None:
+        project_user = self.repository.get_project_user(project_id, user_id)
+        return project_user.role if project_user else None
+
+    def is_project_leader(self, project_id: int, user_id: int) -> bool:
+        
+        role = self.get_user_role(project_id, user_id)
+        return role in (RoleEnum.OWNER, RoleEnum.ADMIN)
+
     def get_project_users(
         self,
         project_id: int

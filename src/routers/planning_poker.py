@@ -9,6 +9,7 @@ from src.entities.schemas import (
     PlanningPokerSessionResponse,
     PlanningPokerVoteCreate,
     PlanningPokerVoteResponse,
+    TaskResponse,
 )
 from src.service.planning_poker_service import PlanningPokerService
 from src.service.planning_poker_vote_service import PlanningPokerVoteService
@@ -53,7 +54,14 @@ def create_session(
     project_id: int,
     current_user: User = Depends(get_current_user),
     service: PlanningPokerService = Depends(get_planning_poker_service),
+    project_service: ProjectService = Depends(get_project_service),
 ):
+    if not project_service.is_project_member(project_id, current_user.id):
+        raise HTTPException(
+            status_code=403,
+            detail="You must be a member of this project to create a planning poker session",
+        )
+
     return service.create_session(project_id, current_user.id)
 
 
@@ -62,7 +70,14 @@ def list_sessions(
     project_id: int,
     current_user: User = Depends(get_current_user),
     service: PlanningPokerService = Depends(get_planning_poker_service),
+    project_service: ProjectService = Depends(get_project_service),
 ):
+    if not project_service.is_project_member(project_id, current_user.id):
+        raise HTTPException(
+            status_code=403,
+            detail="You must be a member of this project to list planning poker sessions",
+        )
+
     return service.get_project_sessions(project_id)
 
 
@@ -72,7 +87,14 @@ def get_session(
     session_id: int,
     current_user: User = Depends(get_current_user),
     service: PlanningPokerService = Depends(get_planning_poker_service),
+    project_service: ProjectService = Depends(get_project_service),
 ):
+    if not project_service.is_project_member(project_id, current_user.id):
+        raise HTTPException(
+            status_code=403,
+            detail="You must be a member of this project to view this session",
+        )
+
     return service.get_session_in_project(project_id, session_id)
 
 
@@ -82,7 +104,14 @@ def close_session(
     session_id: int,
     current_user: User = Depends(get_current_user),
     service: PlanningPokerService = Depends(get_planning_poker_service),
+    project_service: ProjectService = Depends(get_project_service),
 ):
+    if not project_service.is_project_leader(project_id, current_user.id):
+        raise HTTPException(
+            status_code=403,
+            detail="Only the project leader can close a planning poker session",
+        )
+
     return service.close_session(project_id, session_id)
 
 
@@ -110,7 +139,14 @@ def create_vote(
     data: PlanningPokerVoteCreate,
     current_user: User = Depends(get_current_user),
     service: PlanningPokerVoteService = Depends(get_planning_poker_vote_service),
+    project_service: ProjectService = Depends(get_project_service),
 ):
+    if not project_service.is_project_member(project_id, current_user.id):
+        raise HTTPException(
+            status_code=403,
+            detail="You must be a member of this project to vote",
+        )
+
     return service.create_vote(project_id, session_id, current_user.id, data)
 
 
@@ -120,7 +156,14 @@ def list_votes(
     session_id: int,
     current_user: User = Depends(get_current_user),
     service: PlanningPokerVoteService = Depends(get_planning_poker_vote_service),
+    project_service: ProjectService = Depends(get_project_service),
 ):
+    if not project_service.is_project_member(project_id, current_user.id):
+        raise HTTPException(
+            status_code=403,
+            detail="You must be a member of this project to view the votes",
+        )
+
     return service.get_session_votes(project_id, session_id, current_user.id)
 
 
@@ -134,5 +177,34 @@ def get_item_results(
     item_id: int,
     current_user: User = Depends(get_current_user),
     service: PlanningPokerVoteService = Depends(get_planning_poker_vote_service),
+    project_service: ProjectService = Depends(get_project_service),
 ):
+    if not project_service.is_project_member(project_id, current_user.id):
+        raise HTTPException(
+            status_code=403,
+            detail="You must be a member of this project to view the results",
+        )
+
     return service.get_item_results(project_id, session_id, item_id)
+
+
+@router.post(
+    "/{session_id}/items/{item_id}/apply-estimate",
+    response_model=TaskResponse,
+)
+def apply_estimate(
+    project_id: int,
+    session_id: int,
+    item_id: int,
+    current_user: User = Depends(get_current_user),
+    service: PlanningPokerVoteService = Depends(get_planning_poker_vote_service),
+    project_service: ProjectService = Depends(get_project_service),
+):
+    
+    if not project_service.is_project_leader(project_id, current_user.id):
+        raise HTTPException(
+            status_code=403,
+            detail="Only the project leader can define the task estimate",
+        )
+
+    return service.apply_final_estimate(project_id, session_id, item_id)
