@@ -58,7 +58,14 @@ class User(Base, TimestampMixin):
 
     tasks_created = relationship(
         "Task",
+        foreign_keys="Task.created_by",  
         back_populates="creator"
+    )
+
+    tasks_responsible = relationship(
+        "Task",
+        foreign_keys="Task.responsible_user_id",  
+        back_populates="responsible_user"
     )
 
     assigned_tasks = relationship(
@@ -313,6 +320,12 @@ class Task(Base, TimestampMixin):
         nullable=False
     )
 
+    responsible_user_id = Column(
+        Integer,
+        ForeignKey("public.user.id"),
+        nullable=True  
+    )
+
     points = Column(Integer)
 
     epic = Column(
@@ -338,7 +351,14 @@ class Task(Base, TimestampMixin):
 
     creator = relationship(
         "User",
+        foreign_keys="Task.created_by",  
         back_populates="tasks_created"
+    )
+
+    responsible_user = relationship(
+        "User",
+        foreign_keys="Task.responsible_user_id",  
+        back_populates="tasks_responsible"
     )
 
     parent_task = relationship(
