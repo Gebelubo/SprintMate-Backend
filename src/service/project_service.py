@@ -89,3 +89,10 @@ class ProjectService:
         return {
             "message": "Invitation sent successfully"
         }
+    
+    def get_sprint_tasks(
+        self,
+        project_id: int,
+        sprint_id: int
+    ) -> list:
+        return self.repository.get_sprint_tasks(project_id, sprint_id)
