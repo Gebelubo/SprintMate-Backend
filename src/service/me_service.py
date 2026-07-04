@@ -1,4 +1,6 @@
+from src.entities.enums import SprintStatusEnum
 from src.entities.models import User
+from src.entities.enums import SprintStatusEnum
 from src.entities.schemas import ProjectResponse, ProjectWithRoleResponse
 
 class MeService:
@@ -23,6 +25,29 @@ class MeService:
         return [
             assignment.task
             for assignment in current_user.assigned_tasks
+        ]
+
+    def get_active_tasks_from_me(
+        self,
+        current_user: User
+    ):
+        return [
+            assignment.task
+            for assignment in current_user.assigned_tasks
+            if assignment.task.sprint is not None
+            and assignment.task.sprint.status == SprintStatusEnum.ACTIVE
+        ]
+
+    def get_active_tasks_from_me(
+        self,
+        current_user: User
+    ):
+    
+        return [
+            assignment.task
+            for assignment in current_user.assigned_tasks
+            if assignment.task.sprint is not None
+            and assignment.task.sprint.status == SprintStatusEnum.ACTIVE
         ]
 
     def get_comments_from_me(
