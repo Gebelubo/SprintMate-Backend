@@ -389,3 +389,6 @@ class PlanningPokerResultResponse(BaseModel):
     votes: list[PlanningPokerVoteResponse]
     average: Optional[float]
     final_estimate: Optional[str]
+
+class PlanningPokerInviteSchema(BaseModel):
+    emails: list[str]
