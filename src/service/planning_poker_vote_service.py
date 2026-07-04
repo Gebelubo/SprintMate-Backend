@@ -13,6 +13,7 @@ from src.repositories.planning_poker_vote_repository import (
     PlanningPokerVoteRepository,
 )
 from src.repositories.task_repository import TaskRepository
+from src.repositories.project_repository import ProjectRepository
 
 _NUMERIC_CARDS = sorted(
     (card for card in PLANNING_POKER_CARDS if card.isdigit()),
@@ -25,6 +26,7 @@ class PlanningPokerVoteService:
         self.repository = PlanningPokerVoteRepository(db)
         self.session_repository = PlanningPokerRepository(db)
         self.task_repository = TaskRepository(db)
+        self.project_repository = ProjectRepository(db)
 
     def get_cards(self) -> list[str]:
         return PLANNING_POKER_CARDS
@@ -107,10 +109,13 @@ class PlanningPokerVoteService:
                 detail="Planning poker session not found in this project",
             )
 
-        if session.status != PlanningPokerStatusEnum.CLOSED:
+        if session.status not in (
+            PlanningPokerStatusEnum.VOTES_REVEALED,
+            PlanningPokerStatusEnum.CLOSED,
+        ):
             raise HTTPException(
                 status_code=409,
-                detail="Votes have not been revealed yet for this session",
+                detail="Os votos ainda não foram revelados para esta sessão.",
             )
 
         votes = self.repository.get_by_session_and_item(session_id, item_id)
@@ -155,6 +160,22 @@ class PlanningPokerVoteService:
         task.points = int(float(result.final_estimate))
 
         return self.task_repository.save(task)
+
+    def have_all_members_voted(
+        self, project_id: int, session_id: int, item_id: int
+    ) -> bool:
+        """
+        Checks if all members of a project have voted on a specific item in a session.
+        """
+        if item_id is None:
+            return False
+
+        members = self.project_repository.get_users(project_id)
+        if not members:
+            return False
+
+        votes = self.repository.get_by_session_and_item(session_id, item_id)
+        return len(votes) >= len(members)
 
     @staticmethod
     def _calculate_average(votes: list[PlanningPokerVote]) -> float | None:

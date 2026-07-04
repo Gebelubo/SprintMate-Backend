@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException
+import logging
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -18,6 +19,9 @@ from src.service.planning_poker_vote_service import PlanningPokerVoteService
 from src.service.project_service import ProjectService
 from src.utils.dependencies import get_current_user
 from src.websocket.connection_manager import manager
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/projects/{project_id}/planning-poker/sessions",
@@ -55,6 +59,7 @@ def get_voting_cards(
 @router.post("/", response_model=PlanningPokerSessionResponse)
 async def create_session(
     project_id: int,
+    data: PlanningPokerInviteSchema,
     current_user: User = Depends(get_current_user),
     service: PlanningPokerService = Depends(get_planning_poker_service),
     project_service: ProjectService = Depends(get_project_service),
@@ -67,6 +72,27 @@ async def create_session(
 
     session = service.create_session(project_id, current_user.id)
 
+    # Send invitation emails
+    if data.emails:
+        logger.info(f"--- Received request to invite emails: {data.emails} ---")
+        project = project_service.get_project(project_id)
+        if project is None:
+            # This should ideally not happen if the member check passed
+            raise HTTPException(status_code=404, detail="Project not found")
+
+        from src.utils.send_email import send_planning_poker_invite_email
+
+        for email in data.emails:
+            try:
+                await send_planning_poker_invite_email(
+                    email=email,
+                    project_id=project_id,
+                    project_name=project.name,
+                    subject=f"Convite para o Planning Poker: {project.name}",
+                )
+            except Exception as e:
+                logger.error(f"Failed to send email to {email}: {e}", exc_info=True)
+
     await manager.broadcast(
         session.id,
         "session_created",
@@ -74,38 +100,24 @@ async def create_session(
     )
     return session
 
-@router.post("/invite", status_code=200)
-async def invite_members_to_poker(
+
+@router.get("/active", response_model=PlanningPokerSessionResponse, responses={404: {"description": "No active session found"}})
+def get_active_session(
     project_id: int,
-    data: PlanningPokerInviteSchema,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    service: PlanningPokerService = Depends(get_planning_poker_service),
     project_service: ProjectService = Depends(get_project_service),
 ):
     if not project_service.is_project_member(project_id, current_user.id):
         raise HTTPException(
             status_code=403,
-            detail="You must be a member of this project to invite members to planning poker",
+            detail="You must be a member of this project to view sessions",
         )
 
-    project = project_service.get_project(project_id)
-    if project is None:
-        raise HTTPException(status_code=404, detail="Project not found")
-
-    from src.utils.send_email import send_planning_poker_invite_email
-
-    for email in data.emails:
-        try:
-            await send_planning_poker_invite_email(
-                email=email,
-                project_id=project_id,
-                project_name=project.name,
-                subject=f"Convite para o Planning Poker: {project.name}",
-            )
-        except Exception as e:
-            print(f"Failed to send email to {email}: {e}")
-
-    return {"message": "Invitations sent successfully"}
+    session = service.get_active_session_for_project(project_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="No active session found for this project")
+    return session
 
 
 @router.get("/", response_model=list[PlanningPokerSessionResponse])
@@ -124,23 +136,6 @@ def list_sessions(
     return service.get_project_sessions(project_id)
 
 
-@router.get("/{session_id}", response_model=PlanningPokerSessionResponse)
-def get_session(
-    project_id: int,
-    session_id: int,
-    current_user: User = Depends(get_current_user),
-    service: PlanningPokerService = Depends(get_planning_poker_service),
-    project_service: ProjectService = Depends(get_project_service),
-):
-    if not project_service.is_project_member(project_id, current_user.id):
-        raise HTTPException(
-            status_code=403,
-            detail="You must be a member of this project to view this session",
-        )
-
-    return service.get_session_in_project(project_id, session_id)
-
-
 @router.post("/{session_id}/close", response_model=PlanningPokerSessionResponse)
 async def close_session(
     project_id: int,
@@ -156,7 +151,11 @@ async def close_session(
         )
 
     session = service.close_session(project_id, session_id)
-    await manager.broadcast(session_id, "session_closed", {"session_id": session_id})
+
+    # Disconnect all clients, which will trigger the UI to update
+    # via the websocket 'onclose' event handler.
+    await manager.disconnect_all(session_id, code=4000, reason="Session closed by leader")
+
     return session
 
 
@@ -176,10 +175,12 @@ async def reveal_votes(
 
     session = service.reveal_votes(project_id, session_id)
 
+    session_data = PlanningPokerSessionResponse.model_validate(session).model_dump()
+
     await manager.broadcast(
         session_id,
         "votes_revealed",
-        {"session_id": session_id, "session": session.dict() if hasattr(session, "dict") else session},
+        {"session_id": session_id, "session": session_data},
     )
     return session
 
@@ -280,12 +281,31 @@ async def apply_estimate(
 
     task = service.apply_final_estimate(project_id, session_id, item_id)
 
+    task_data = TaskResponse.model_validate(task).model_dump()
+
     await manager.broadcast(
         session_id,
         "estimate_applied",
         {
             "item_id": item_id,
-            "task": task.dict() if hasattr(task, "dict") else task,
+            "task": task_data,
         },
     )
     return task
+
+
+@router.get("/{session_id}", response_model=PlanningPokerSessionResponse)
+def get_session(
+    project_id: int,
+    session_id: int,
+    current_user: User = Depends(get_current_user),
+    service: PlanningPokerService = Depends(get_planning_poker_service),
+    project_service: ProjectService = Depends(get_project_service),
+):
+    if not project_service.is_project_member(project_id, current_user.id):
+        raise HTTPException(
+            status_code=403,
+            detail="You must be a member of this project to view this session",
+        )
+
+    return service.get_session_in_project(project_id, session_id)

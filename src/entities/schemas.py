@@ -1,5 +1,5 @@
-from pydantic import BaseModel, ConfigDict, field_validator, EmailStr
-from typing import Optional
+from pydantic import BaseModel, ConfigDict, field_validator, EmailStr, Field
+from typing import Optional, List
 from datetime import datetime, date
 import re
 from src.entities.models import SprintStatusEnum
@@ -342,10 +342,10 @@ from src.entities.enums import PlanningPokerStatusEnum
 class PlanningPokerSessionResponse(BaseModel):
     id: int
     project_id: int
-    created_by: int
+    created_by_id: int = Field(alias="created_by")
     status: PlanningPokerStatusEnum
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
 # ----------- PLANNING POKER VOTE ----------------

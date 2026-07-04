@@ -44,12 +44,6 @@ class ConnectionManager:
             self._sessions.setdefault(session_id, SessionConnections()).add(
                 user_id, websocket
             )
-        await self.broadcast(
-            session_id,
-            "participant_joined",
-            {"user_id": user_id},
-            exclude_user_id=None,
-        )
 
     async def disconnect(self, session_id: int, user_id: int, websocket: WebSocket) -> None:
         async with self._lock:
@@ -60,11 +54,24 @@ class ConnectionManager:
             if session.is_empty():
                 del self._sessions[session_id]
 
-        await self.broadcast(
-            session_id,
-            "participant_left",
-            {"user_id": user_id},
-        )
+    async def disconnect_all(self, session_id: int, code: int = 1000, reason: str | None = None):
+        """Disconnect all clients from a session and remove the session."""
+        async with self._lock:
+            session = self._sessions.get(session_id)
+            if session is None:
+                return
+
+            all_websockets = [ws for sockets in session.connections.values() for ws in sockets]
+
+            for ws in all_websockets:
+                try:
+                    await ws.close(code=code, reason=reason)
+                except RuntimeError:
+                    # This can happen if the connection is already closing
+                    pass
+
+            if session_id in self._sessions:
+                del self._sessions[session_id]
 
     async def broadcast(
         self,
@@ -77,7 +84,7 @@ class ConnectionManager:
         if session is None:
             return
 
-        message = json.dumps({"type": event_type, "data": payload})
+        message = json.dumps({"event": event_type, "payload": payload})
 
         dead: list[tuple[int, WebSocket]] = []
         for user_id, sockets in list(session.connections.items()):
@@ -102,5 +109,3 @@ class ConnectionManager:
 
 
 manager = ConnectionManager()
-
-

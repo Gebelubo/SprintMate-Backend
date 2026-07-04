@@ -34,8 +34,16 @@ class PlanningPokerService:
     def get_project_sessions(self, project_id: int) -> list[PlanningPokerSession]:
         return self.repository.get_project_sessions(project_id)
 
+    def get_active_session_for_project(self, project_id: int) -> PlanningPokerSession | None:
+        return self.repository.get_active_for_project(project_id)
+
     def close_session(self, project_id: int, session_id: int) -> PlanningPokerSession:
         session = self.get_session_in_project(project_id, session_id)
+
+        if session.status == PlanningPokerStatusEnum.CLOSED:
+            # The session is already closed, so we can just return it.
+            # This makes the endpoint idempotent.
+            return session
 
         return self.repository.close(session.id)
 
@@ -48,4 +56,4 @@ class PlanningPokerService:
                 detail="Votes for this planning poker session have already been revealed",
             )
 
-        return self.repository.close(session.id)
+        return self.repository.update_status(session.id, PlanningPokerStatusEnum.VOTES_REVEALED)

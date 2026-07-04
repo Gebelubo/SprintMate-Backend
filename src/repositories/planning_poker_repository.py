@@ -44,18 +44,23 @@ class PlanningPokerRepository:
         return (
             self.db.query(PlanningPokerSession)
             .filter(PlanningPokerSession.project_id == project_id)
+            .order_by(PlanningPokerSession.id.desc())
             .all()
         )
 
-    def close(self, session_id: int) -> PlanningPokerSession | None:
+    def get_active_for_project(self, project_id: int) -> PlanningPokerSession | None:
+        return self.db.query(PlanningPokerSession).filter(
+            PlanningPokerSession.project_id == project_id,
+            PlanningPokerSession.status != PlanningPokerStatusEnum.CLOSED
+        ).order_by(PlanningPokerSession.id.desc()).first()
+
+    def update_status(self, session_id: int, status: PlanningPokerStatusEnum) -> PlanningPokerSession:
         session = self.get_by_id(session_id)
-
-        if session is None:
-            return None
-
-        session.status = PlanningPokerStatusEnum.CLOSED
-
-        self.db.commit()
-        self.db.refresh(session)
-
+        if session:
+            session.status = status
+            self.db.commit()
+            self.db.refresh(session)
         return session
+
+    def close(self, session_id: int) -> PlanningPokerSession:
+        return self.update_status(session_id, PlanningPokerStatusEnum.CLOSED)

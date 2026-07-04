@@ -50,5 +50,6 @@ class NotificationTypeEnum(enum.Enum):
 
 class PlanningPokerStatusEnum(enum.Enum):
     OPEN = "OPEN"
+    VOTES_REVEALED = "VOTES_REVEALED"
     CLOSED = "CLOSED"
 
