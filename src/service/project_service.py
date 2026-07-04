@@ -90,10 +90,9 @@ class ProjectService:
             "message": "Invitation sent successfully"
         }
     
-    # def add_column_tasks_in_board(
-    #     self,
-    #     project_id: int,
-    #     column_id: int,
-    #     sprint_id: int
-    # ) -> list:
-    #     return self.repository.add_column_tasks_in_board(project_id, column_id, sprint_id)
+    def get_sprint_tasks(
+        self,
+        project_id: int,
+        sprint_id: int
+    ) -> list:
+        return self.repository.get_sprint_tasks(project_id, sprint_id)
