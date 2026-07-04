@@ -5,6 +5,7 @@ from src.entities.models import Sprint, Task
 from src.entities.enums import SprintStatusEnum
 from src.entities.schemas import SprintCreate, SprintUpdate, SprintProjectCreate
 from src.repositories.sprint_repository import SprintRepository
+from src.repositories.board_repository import BoardRepository
 
 
 class SprintService:
@@ -75,8 +76,34 @@ class SprintService:
         if sprint.status == SprintStatusEnum.FINISHED:
             raise HTTPException(status_code=400, detail="Cannot start a sprint that is already finished")
 
-        return self.repository.start(sprint_id)
-    
+        sprint = self.repository.start(sprint_id)
+
+        self._place_tasks_on_board(project_id, sprint_id)
+
+        return sprint
+
+    def _place_tasks_on_board(self, project_id: int, sprint_id: int) -> None:
+
+        board_repository = BoardRepository(self.repository.db)
+        columns = board_repository.get_by_project(project_id)
+
+        if not columns:
+            raise HTTPException(
+                status_code=400,
+                detail="Project has no board columns configured"
+            )
+
+        default_column = columns[0]
+
+        tasks = self.repository.get_all_tasks(sprint_id)
+
+        for task in tasks:
+            if task.column_id is None:
+                task.column_id = default_column.id
+
+        self.repository.db.commit()
+
+
     def get_all_tasks(self, sprint_id: int,):
         return self.repository.get_all_tasks(sprint_id)
     
