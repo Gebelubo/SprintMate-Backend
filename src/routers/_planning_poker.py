@@ -1,12 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from src.db.deps import get_db
 from src.entities.models import User
 from src.entities.schemas import (
     PlanningPokerCardsResponse,
-    PlanningPokerInviteSchema,
     PlanningPokerResultResponse,
     PlanningPokerSessionResponse,
     PlanningPokerVoteCreate,
@@ -17,7 +15,6 @@ from src.service.planning_poker_service import PlanningPokerService
 from src.service.planning_poker_vote_service import PlanningPokerVoteService
 from src.service.project_service import ProjectService
 from src.utils.dependencies import get_current_user
-from src.websocket.connection_manager import manager
 
 router = APIRouter(
     prefix="/projects/{project_id}/planning-poker/sessions",
@@ -53,7 +50,7 @@ def get_voting_cards(
 
 
 @router.post("/", response_model=PlanningPokerSessionResponse)
-async def create_session(
+def create_session(
     project_id: int,
     current_user: User = Depends(get_current_user),
     service: PlanningPokerService = Depends(get_planning_poker_service),
@@ -65,14 +62,14 @@ async def create_session(
             detail="You must be a member of this project to create a planning poker session",
         )
 
-    session = service.create_session(project_id, current_user.id)
+    return service.create_session(project_id, current_user.id)
 
-    await manager.broadcast(
-        session.id,
-        "session_created",
-        {"session_id": session.id, "created_by": current_user.id},
-    )
-    return session
+
+from pydantic import BaseModel
+
+class PlanningPokerInviteSchema(BaseModel):
+    emails: list[str]
+
 
 @router.post("/invite", status_code=200)
 async def invite_members_to_poker(
@@ -80,7 +77,7 @@ async def invite_members_to_poker(
     data: PlanningPokerInviteSchema,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-    project_service: ProjectService = Depends(get_project_service),
+    project_service: ProjectService = Depends(get_project_service)
 ):
     if not project_service.is_project_member(project_id, current_user.id):
         raise HTTPException(
@@ -100,7 +97,7 @@ async def invite_members_to_poker(
                 email=email,
                 project_id=project_id,
                 project_name=project.name,
-                subject=f"Convite para o Planning Poker: {project.name}",
+                subject=f"Convite para o Planning Poker: {project.name}"
             )
         except Exception as e:
             print(f"Failed to send email to {email}: {e}")
@@ -142,7 +139,7 @@ def get_session(
 
 
 @router.post("/{session_id}/close", response_model=PlanningPokerSessionResponse)
-async def close_session(
+def close_session(
     project_id: int,
     session_id: int,
     current_user: User = Depends(get_current_user),
@@ -155,13 +152,11 @@ async def close_session(
             detail="Only the project leader can close a planning poker session",
         )
 
-    session = service.close_session(project_id, session_id)
-    await manager.broadcast(session_id, "session_closed", {"session_id": session_id})
-    return session
+    return service.close_session(project_id, session_id)
 
 
 @router.post("/{session_id}/reveal", response_model=PlanningPokerSessionResponse)
-async def reveal_votes(
+def reveal_votes(
     project_id: int,
     session_id: int,
     current_user: User = Depends(get_current_user),
@@ -174,18 +169,11 @@ async def reveal_votes(
             detail="You must be a member of this project to reveal votes",
         )
 
-    session = service.reveal_votes(project_id, session_id)
-
-    await manager.broadcast(
-        session_id,
-        "votes_revealed",
-        {"session_id": session_id, "session": session.dict() if hasattr(session, "dict") else session},
-    )
-    return session
+    return service.reveal_votes(project_id, session_id)
 
 
 @router.post("/{session_id}/votes", response_model=PlanningPokerVoteResponse)
-async def create_vote(
+def create_vote(
     project_id: int,
     session_id: int,
     data: PlanningPokerVoteCreate,
@@ -199,27 +187,7 @@ async def create_vote(
             detail="You must be a member of this project to vote",
         )
 
-    vote = service.create_vote(project_id, session_id, current_user.id, data)
-
-    await manager.broadcast(
-        session_id,
-        "vote_created",
-        {
-            "item_id": getattr(data, "item_id", None),
-            "user_id": current_user.id,
-        },
-    )
-
-    if hasattr(service, "have_all_members_voted") and service.have_all_members_voted(
-        project_id, session_id, getattr(data, "item_id", None)
-    ):
-        await manager.broadcast(
-            session_id,
-            "all_voted",
-            {"item_id": getattr(data, "item_id", None)},
-        )
-
-    return vote
+    return service.create_vote(project_id, session_id, current_user.id, data)
 
 
 @router.get("/{session_id}/votes", response_model=list[PlanningPokerVoteResponse])
@@ -264,7 +232,7 @@ def get_item_results(
     "/{session_id}/items/{item_id}/apply-estimate",
     response_model=TaskResponse,
 )
-async def apply_estimate(
+def apply_estimate(
     project_id: int,
     session_id: int,
     item_id: int,
@@ -272,20 +240,11 @@ async def apply_estimate(
     service: PlanningPokerVoteService = Depends(get_planning_poker_vote_service),
     project_service: ProjectService = Depends(get_project_service),
 ):
+    
     if not project_service.is_project_leader(project_id, current_user.id):
         raise HTTPException(
             status_code=403,
             detail="Only the project leader can define the task estimate",
         )
 
-    task = service.apply_final_estimate(project_id, session_id, item_id)
-
-    await manager.broadcast(
-        session_id,
-        "estimate_applied",
-        {
-            "item_id": item_id,
-            "task": task.dict() if hasattr(task, "dict") else task,
-        },
-    )
-    return task
+    return service.apply_final_estimate(project_id, session_id, item_id)
