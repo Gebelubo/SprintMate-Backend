@@ -127,12 +127,7 @@ class ProjectRepository:
         self.db.commit()
         return True
     
-    # def add_column_tasks_in_board(self, project_id: int, column_id: int, sprint_id: int) -> list[Task]:
-    #     task_list = self.db.query(Task).filter(Task.project_id == project_id, Task.sprint_id == sprint_id).all()
-
-    #     for task in task_list:
-    #         if task.column_id is None:
-    #             task.column_id = column_id
-
-    #     self.db.commit()
-    #     return task_listw
+    def get_sprint_tasks(self, project_id: int, sprint_id: int) -> list[Task]:
+        return (self.db.query(Task)
+                .filter(Task.project_id == project_id, Task.sprint_id == sprint_id)
+                .all())
