@@ -299,3 +299,13 @@ def get_project_backlog(
 ):
     service = TaskService(db) 
     return service.get_project_backlog(project_id)
+
+# @router.post("/{project_id}/columns/{column_id}/tasks")
+# def add_column_tasks_in_board(
+#     project_id: int,
+#     column_id: int,
+#     sprint_id: int,
+#     db: Session = Depends(get_db),
+#     service: ProjectService = Depends(get_project_service),
+# ):
+#     return service.add_column_tasks_in_board(project_id, column_id, sprint_id)
