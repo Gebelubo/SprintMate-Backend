@@ -20,6 +20,9 @@ class SprintService:
     def get_sprint(self, sprint_id: int) -> Sprint | None:
         return self.repository.get_by_id(sprint_id)
 
+    def get_sprint_dates(self, sprint_id: int) -> Sprint | None:
+        return self.repository.get_by_id(sprint_id)
+
     def update_sprint(
         self,
         sprint_id: int,

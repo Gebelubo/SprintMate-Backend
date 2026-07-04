@@ -8,7 +8,8 @@ from src.entities.schemas import (
     SprintCreate,
     SprintUpdate,
     SprintResponse,
-    SprintProjectCreate
+    SprintProjectCreate,
+    SprintDatesResponse
 )
 from src.service.sprint_service import SprintService
 
@@ -32,13 +33,26 @@ def get_sprints(
     service = SprintService(db)
     return service.get_all_sprints()
 
-@router.get("/{sprint_id}")
+@router.get("/{sprint_id}", response_model=SprintResponse)
 def get_sprint(
     sprint_id: int,
     db: Session = Depends(get_db)
 ):
     service = SprintService(db)
     return service.get_sprint(sprint_id)
+
+@router.get("/{sprint_id}/dates", response_model=SprintDatesResponse)
+def get_sprint_dates(
+    sprint_id: int,
+    db: Session = Depends(get_db)
+):
+    service = SprintService(db)
+    sprint = service.get_sprint_dates(sprint_id)
+
+    if sprint is None:
+        raise HTTPException(status_code=404, detail="Sprint not found")
+
+    return sprint
 
 @router.patch("/{sprint_id}")
 def update_sprint(

@@ -238,6 +238,13 @@ class SprintResponse(BaseModel):
     goal: str | None
     points: int | None
 
+class SprintDatesResponse(BaseModel):
+    id: int
+    start_date: date
+    end_date: date
+
+    model_config = ConfigDict(from_attributes=True)
+
 class ProjectWithRoleResponse(ProjectResponse):
     role: RoleEnum
 
