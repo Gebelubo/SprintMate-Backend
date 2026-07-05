@@ -36,6 +36,7 @@ class SessionConnections:
 class ConnectionManager:
     def __init__(self) -> None:
         self._sessions: dict[int, SessionConnections] = {}
+        self._current_items: dict[int, dict[str, Any]] = {}
         self._lock = asyncio.Lock()
 
     async def connect(self, session_id: int, user_id: int, websocket: WebSocket) -> None:
@@ -59,6 +60,7 @@ class ConnectionManager:
         async with self._lock:
             session = self._sessions.get(session_id)
             if session is None:
+                self._current_items.pop(session_id, None)
                 return
 
             all_websockets = [ws for sockets in session.connections.values() for ws in sockets]
@@ -72,6 +74,7 @@ class ConnectionManager:
 
             if session_id in self._sessions:
                 del self._sessions[session_id]
+            self._current_items.pop(session_id, None)
 
     async def broadcast(
         self,
@@ -106,6 +109,16 @@ class ConnectionManager:
     def active_participant_ids(self, session_id: int) -> list[int]:
         session = self._sessions.get(session_id)
         return session.user_ids() if session else []
+
+    def set_current_item(self, session_id: int, current_item: dict[str, Any] | None) -> None:
+        if current_item is None:
+            self._current_items.pop(session_id, None)
+            return
+
+        self._current_items[session_id] = current_item
+
+    def get_current_item(self, session_id: int) -> dict[str, Any] | None:
+        return self._current_items.get(session_id)
 
 
 manager = ConnectionManager()

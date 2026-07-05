@@ -6,7 +6,11 @@ from sqlalchemy.orm import Session
 
 from src.db.deps import get_db
 from src.entities.models import User
+from src.entities.enums import PlanningPokerStatusEnum
+from src.entities.schemas import PlanningPokerVoteResponse
 from src.repositories.user_repository import UserRepository
+from src.service.planning_poker_service import PlanningPokerService
+from src.service.planning_poker_vote_service import PlanningPokerVoteService
 from src.service.project_service import ProjectService
 from src.websocket.connection_manager import manager
 
@@ -64,6 +68,7 @@ async def planning_poker_ws(
     # --- START: New logic to sync participants on connect ---
     # 1. Get a list of users already in the session
     connected_user_ids = manager.active_participant_ids(session_id)
+    current_item = manager.get_current_item(session_id)
     participants = []
     user_repo = UserRepository(db)
     for uid in connected_user_ids:
@@ -77,8 +82,29 @@ async def planning_poker_ws(
                 "role": role.value if role else None,
             })
 
+    votes_payload: list[dict] = []
+    if current_item and current_item.get("item_id") is not None:
+        vote_service = PlanningPokerVoteService(db)
+        votes = vote_service.repository.get_by_session_and_item(
+            session_id,
+            int(current_item["item_id"]),
+        )
+        votes_payload = [
+            PlanningPokerVoteResponse.model_validate(vote).model_dump()
+            for vote in votes
+        ]
+
     # 2. Send the current participant list ONLY to the newly connected user
-    await websocket.send_json({"event": "session_state", "payload": {"participants": participants}})
+    await websocket.send_json(
+        {
+            "event": "session_state",
+            "payload": {
+                "participants": participants,
+                "currentItem": current_item,
+                "votes": votes_payload,
+            },
+        }
+    )
     # --- END: New logic ---
 
     user_role = project_service.get_user_role(project_id, user.id)
@@ -103,12 +129,22 @@ async def planning_poker_ws(
                 # Only the project leader can start a vote on an item
                 if project_service.is_project_leader(project_id, user.id):
                     item_id = payload.get("item_id")
-                    if item_id:
+                    if item_id is not None:
+                        PlanningPokerService(db).repository.update_status(
+                            session_id,
+                            PlanningPokerStatusEnum.OPEN,
+                        )
+                        current_item_payload = payload.get("item") or {"item_id": item_id}
+                        manager.set_current_item(session_id, current_item_payload)
                         await manager.broadcast(
                             session_id,
                             "voting_on_item",
-                            {"item_id": item_id},
+                            current_item_payload,
                         )
+            elif event == "clear_current_item":
+                if project_service.is_project_leader(project_id, user.id):
+                    manager.set_current_item(session_id, None)
+                    await manager.broadcast(session_id, "current_item_cleared", {})
     except WebSocketDisconnect:
         pass
     finally:

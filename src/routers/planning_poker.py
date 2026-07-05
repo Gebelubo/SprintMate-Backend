@@ -167,15 +167,17 @@ async def reveal_votes(
     service: PlanningPokerService = Depends(get_planning_poker_service),
     project_service: ProjectService = Depends(get_project_service),
 ):
-    if not project_service.is_project_member(project_id, current_user.id):
+    if not project_service.is_project_leader(project_id, current_user.id):
         raise HTTPException(
             status_code=403,
-            detail="You must be a member of this project to reveal votes",
+            detail="Only the project leader can reveal votes",
         )
 
     session = service.reveal_votes(project_id, session_id)
 
-    session_data = PlanningPokerSessionResponse.model_validate(session).model_dump()
+    session_data = PlanningPokerSessionResponse.model_validate(session).model_dump(
+        mode="json"
+    )
 
     await manager.broadcast(
         session_id,
