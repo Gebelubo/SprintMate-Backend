@@ -93,10 +93,11 @@ async def create_session(
             except Exception as e:
                 logger.error(f"Failed to send email to {email}: {e}", exc_info=True)
 
+    session_data = PlanningPokerSessionResponse.model_validate(session).model_dump(mode="json")
     await manager.broadcast(
-        session.id,
-        "session_created",
-        {"session_id": session.id, "created_by": current_user.id},
+        -project_id,
+        "poker_session_started",
+        {"session": session_data},
     )
     return session
 
@@ -156,6 +157,12 @@ async def close_session(
     # via the websocket 'onclose' event handler.
     await manager.disconnect_all(session_id, code=4000, reason="Session closed by leader")
 
+    # Also broadcast to the project-level channel that the session has ended
+    await manager.broadcast(
+        -project_id,
+        "poker_session_ended",
+        {"session_id": session_id},
+    )
     return session
 
 
