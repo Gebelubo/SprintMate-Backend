@@ -21,14 +21,16 @@ router = APIRouter(
 @router.post("/")
 def create_sprint(
     data: SprintCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     service = SprintService(db)
     return service.create_sprint(data)
 
 @router.get("/")
 def get_sprints(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     service = SprintService(db)
     return service.get_all_sprints()
@@ -36,7 +38,8 @@ def get_sprints(
 @router.get("/{sprint_id}", response_model=SprintResponse)
 def get_sprint(
     sprint_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     service = SprintService(db)
     return service.get_sprint(sprint_id)
@@ -44,7 +47,8 @@ def get_sprint(
 @router.get("/{sprint_id}/dates", response_model=SprintDatesResponse)
 def get_sprint_dates(
     sprint_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     service = SprintService(db)
     sprint = service.get_sprint_dates(sprint_id)
@@ -58,7 +62,8 @@ def get_sprint_dates(
 def update_sprint(
     sprint_id: int,
     data: SprintUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     service = SprintService(db)
     return service.update_sprint(sprint_id, data)
@@ -66,7 +71,8 @@ def update_sprint(
 @router.delete("/{sprint_id}")
 def delete_sprint(
     sprint_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     service = SprintService(db)
     return service.delete_sprint(sprint_id)
@@ -74,7 +80,8 @@ def delete_sprint(
 @router.get("/{sprint_id}")
 def get_sprint_by_id(
     sprint_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     service = SprintService(db)
     return service.get_sprint_by_id(sprint_id)
@@ -83,7 +90,8 @@ def get_sprint_by_id(
 def add_task_to_sprint(
     sprint_id: int,
     task_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     service = SprintService(db)
     return service.add_task_to_sprint(sprint_id, task_id)

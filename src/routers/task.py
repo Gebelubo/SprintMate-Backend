@@ -75,7 +75,8 @@ def create_task(
 
 @router.get("/", response_model=list[TaskResponse])
 def list_tasks(
-    service: TaskService = Depends(get_task_service)
+    service: TaskService = Depends(get_task_service),
+    current_user: User = Depends(get_current_user)
 ):
     return service.get_all_tasks()
 
@@ -83,7 +84,8 @@ def list_tasks(
 @router.get("/{task_id}", response_model=TaskResponse)
 def get_task(
     task_id: int,
-    service: TaskService = Depends(get_task_service)
+    service: TaskService = Depends(get_task_service),
+    current_user: User = Depends(get_current_user)
 ):
     task = service.get_task(task_id)
 
@@ -139,7 +141,8 @@ def update_task(
 )
 def delete_task(
     task_id: int,
-    service: TaskService = Depends(get_task_service)
+    service: TaskService = Depends(get_task_service),
+    current_user: User = Depends(get_current_user)
 ):
     deleted = service.delete_task(task_id)
 
@@ -157,7 +160,8 @@ def list_comments(
     task_id: int,
     service: CommentService = Depends(
         get_comment_service
-    )
+    ),
+    current_user: User = Depends(get_current_user)
 ):
     return service.get_task_comments(task_id)
 
@@ -190,7 +194,8 @@ def get_comment(
     comment_id: int,
     service: CommentService = Depends(
         get_comment_service
-    )
+    ),
+    current_user: User = Depends(get_current_user)
 ):
     comment = service.get_comment(comment_id)
 
@@ -212,7 +217,8 @@ def update_comment(
     data: CommentUpdate,
     service: CommentService = Depends(
         get_comment_service
-    )
+    ),
+    current_user: User = Depends(get_current_user)
 ):
     comment = service.update_comment(
         comment_id,
@@ -236,7 +242,8 @@ def delete_comment(
     comment_id: int,
     service: CommentService = Depends(
         get_comment_service
-    )
+    ),
+    current_user: User = Depends(get_current_user)
 ):
     deleted = service.delete_comment(
         comment_id
@@ -256,7 +263,8 @@ def list_attachments(
     task_id: int,
     service: AttachmentService = Depends(
         get_attachment_service
-    )
+    ),
+    current_user: User = Depends(get_current_user)
 ):
     return service.get_task_attachments(
         task_id
@@ -272,7 +280,8 @@ def create_attachment(
     data: AttachmentCreate,
     service: AttachmentService = Depends(
         get_attachment_service
-    )
+    ),
+    current_user: User = Depends(get_current_user)
 ):
     return service.create_attachment(
         task_id,
@@ -287,7 +296,8 @@ def get_attachment(
     attachment_id: int,
     service: AttachmentService = Depends(
         get_attachment_service
-    )
+    ),
+    current_user: User = Depends(get_current_user)
 ):
     attachment = service.get_attachment(
         attachment_id
@@ -310,7 +320,8 @@ def delete_attachment(
     attachment_id: int,
     service: AttachmentService = Depends(
         get_attachment_service
-    )
+    ),
+    current_user: User = Depends(get_current_user)
 ):
     deleted = service.delete_attachment(
         attachment_id
@@ -324,7 +335,7 @@ def delete_attachment(
 
 # --- Board move ---
 
-def get_board_service(db: Session = Depends(get_db)) -> BoardService:
+def get_board_service(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)) -> BoardService:
     return BoardService(db)
 
 
@@ -344,7 +355,8 @@ def move_task(
 def assign_user_to_task(
     item_id: int,
     user_id: int,
-    service: TaskService = Depends(get_task_service)
+    service: TaskService = Depends(get_task_service),
+    current_user: User = Depends(get_current_user)
 ):
     try:
         user_task = service.assign_user_to_task(item_id, user_id)
@@ -357,7 +369,8 @@ def assign_user_to_task(
 @router.get("/{task_id}/assigned-user", response_model=UserResponse)
 def get_assigned_user(
     task_id: int,
-    service: TaskService = Depends(get_task_service)
+    service: TaskService = Depends(get_task_service),
+    current_user: User = Depends(get_current_user)
 ):
     user = service.get_assigned_user(task_id)
     if not user:

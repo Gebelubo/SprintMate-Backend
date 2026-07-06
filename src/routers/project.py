@@ -255,7 +255,8 @@ async def invite_user(
 def create_sprint_in_project(
     project_id: int,
     data: SprintProjectCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
    service = SprintService(db) 
    return service.create_sprint_in_project(data, project_id)
@@ -263,7 +264,8 @@ def create_sprint_in_project(
 @router.get("/{project_id}/sprints", status_code=200)
 def get_project_sprints(
     project_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     service = SprintService(db) 
     return service.get_project_sprints(project_id)
@@ -295,7 +297,8 @@ def stop_sprint(
 @router.get("/{project_id}/tasks/backlog", status_code=200)
 def get_project_backlog(
     project_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     service = TaskService(db) 
     return service.get_project_backlog(project_id)
@@ -306,5 +309,6 @@ def get_sprint_tasks(
     sprint_id: int,
     db: Session = Depends(get_db),
     service: ProjectService = Depends(get_project_service),
+    current_user: User = Depends(get_current_user)
 ):
     return service.get_sprint_tasks(project_id, sprint_id)
