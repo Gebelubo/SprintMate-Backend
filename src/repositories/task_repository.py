@@ -23,7 +23,7 @@ class TaskRepository:
             title=data.title,
             type=data.type,
             priority=data.priority,
-            column_id=1,
+            #column_id=1,
             project_id=data.project_id,
             responsible_user_id=data.assignee_id,
             created_by=created_by

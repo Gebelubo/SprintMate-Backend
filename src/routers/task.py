@@ -66,10 +66,12 @@ def create_task(
     current_user: User = Depends(get_current_user),
     service: TaskService = Depends(get_task_service)
 ):
-    task= service.create_task(
+    task = service.create_task(
         data=data,
         created_by=current_user.id
     )
+    if task is None:
+        raise HTTPException(status_code=400, detail="Failed to create task")
     return task
 
 
